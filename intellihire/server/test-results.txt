@@ -1,0 +1,17 @@
+=== INTELLIHIRE API TEST (via Vite proxy :5173) ===
+1. Register Candidate: 201 PASS
+2. Register Admin: 201 PASS
+3. Login Candidate: 200 PASS
+4. Get Me: 200 PASS
+5. Submit Resume: 201 PASS Score: 70
+6. Get Resume: 200 PASS
+7. Update Resume: 200 PASS NewScore: 95
+8. Get Profile: 200 PASS FinalScore: 28.5
+9. Admin Candidates: 200 PASS Count: 7
+10. Candidate Detail: 200 PASS
+11. Interview Score: 201 PASS AvgScore: 85
+12. Leaderboard: 200 PASS
+    Alice rank: 3 final: 45.5
+13. RBAC deny: 403 PASS
+14. Validation: 400 PASS
+15. 404 Route: 404 PASS

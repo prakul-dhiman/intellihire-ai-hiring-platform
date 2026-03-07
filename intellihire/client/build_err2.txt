@@ -1,0 +1,111 @@
+﻿[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 1151 modules transformed.
+node.exe : [31mΓ£ù[39m 
+Build failed in 9.18s
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: ([31mΓ£  
+  ù[39m Build failed in 9   
+ .18s:String) [], RemoteE    
+xception
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+[31merror during build:
+[31msrc/pages/candidate/Inte
+rview.jsx (3:52): 
+"HiOutlineVideoCameraSlash" 
+is not exported by "node_modu
+les/react-icons/hi/index.mjs"
+, imported by "src/pages/cand
+idate/Interview.jsx".[31m
+file: [36mC:/Users/Ansh/Desk
+top/Intellihire/intellihire/c
+lient/src/pages/candidate/Int
+erview.jsx:3:52[31m
+[33m
+1: import { useState, 
+useEffect, useRef } from 
+'react';
+2: import { motion, 
+AnimatePresence } from 
+'framer-motion';
+3: import { 
+HiOutlineMicrophone, 
+HiOutlineVideoCamera, 
+HiOutlineVideoCameraSlash, 
+HiCheckCircle, HiMicrophone 
+} from 're...
+                             
+                          ^
+4: import axios from 
+'../../api/axios';
+5: import { PageTransition } 
+from 
+'../../components/Motion';
+[31m
+    at getRollupError (file:/
+//C:/Users/Ansh/Desktop/Intel
+lihire/intellihire/client/nod
+e_modules/rollup/dist/es/shar
+ed/parseAst.js:402:41)
+    at error (file:///C:/User
+s/Ansh/Desktop/Intellihire/in
+tellihire/client/node_modules
+/rollup/dist/es/shared/parseA
+st.js:398:42)
+    at Module.error (file:///
+C:/Users/Ansh/Desktop/Intelli
+hire/intellihire/client/node_
+modules/rollup/dist/es/shared
+/node-entry.js:17040:16)
+    at Module.traceVariable (
+file:///C:/Users/Ansh/Desktop
+/Intellihire/intellihire/clie
+nt/node_modules/rollup/dist/e
+s/shared/node-entry.js:17452:
+29)
+    at 
+ModuleScope.findVariable (fil
+e:///C:/Users/Ansh/Desktop/In
+tellihire/intellihire/client/
+node_modules/rollup/dist/es/s
+hared/node-entry.js:15070:39)
+    at 
+FunctionScope.findVariable (f
+ile:///C:/Users/Ansh/Desktop/
+Intellihire/intellihire/clien
+t/node_modules/rollup/dist/es
+/shared/node-entry.js:5673:38
+)
+    at FunctionBodyScope.find
+Variable (file:///C:/Users/An
+sh/Desktop/Intellihire/intell
+ihire/client/node_modules/rol
+lup/dist/es/shared/node-entry
+.js:5673:38)
+    at Identifier.bind (file:
+///C:/Users/Ansh/Desktop/Inte
+llihire/intellihire/client/no
+de_modules/rollup/dist/es/sha
+red/node-entry.js:5447:40)
+    at CallExpression.bind (f
+ile:///C:/Users/Ansh/Desktop/
+Intellihire/intellihire/clien
+t/node_modules/rollup/dist/es
+/shared/node-entry.js:2825:28
+)
+    at CallExpression.bind (f
+ile:///C:/Users/Ansh/Desktop/
+Intellihire/intellihire/clien
+t/node_modules/rollup/dist/es
+/shared/node-entry.js:12179:1
+5)[39m
