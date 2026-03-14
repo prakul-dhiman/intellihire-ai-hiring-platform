@@ -11,22 +11,6 @@ import {
     HiOutlineArrowRight, HiOutlineFilter, HiOutlineSortDescending,
 } from 'react-icons/hi';
 
-/* ─── Featured Courses ────────────────────────────────────── */
-const courses = [
-    { id: 1, tag: "Interview Crash Course", title: "Data Structures and Algorithms", ch: 13, items: 149, g: 'linear-gradient(135deg,#6366f1,#4338ca)' },
-    { id: 2, tag: "Interview Crash Course", title: "System Design for Interviews", ch: 16, items: 81, g: 'linear-gradient(135deg,#7c3aed,#6d28d9)' },
-    { id: 3, tag: "Beginner's Guide", title: "The IntelliHire Beginner's Guide", ch: 4, items: 17, g: 'linear-gradient(135deg,#ec4899,#db2777)' },
-    { id: 4, tag: "Easy Collection", title: "Top Interview Questions", ch: 9, items: 48, g: 'linear-gradient(135deg,#06b6d4,#0891b2)' },
-    { id: 5, tag: "Detailed Explanation", title: "Dynamic Programming Patterns", ch: 6, items: 55, g: 'linear-gradient(135deg,#10b981,#059669)' },
-    { id: 6, tag: "Advanced Topics", title: "Graph Theory & BFS/DFS", ch: 8, items: 42, g: 'linear-gradient(135deg,#f59e0b,#d97706)' },
-];
-const interviewCards = [
-    { id: 1, tag: "Crash Course", title: "Cheatsheets", g: 'linear-gradient(135deg,#6366f1,#4338ca)' },
-    { id: 2, tag: "Crash Course", title: "DSA Deep Dive", g: 'linear-gradient(135deg,#7c3aed,#6d28d9)' },
-    { id: 3, tag: "Crash Course", title: "System Design", g: 'linear-gradient(135deg,#06b6d4,#0891b2)' },
-    { id: 4, tag: "Get Prepared for", title: "Google Interview", g: 'linear-gradient(135deg,#f59e0b,#d97706)', premium: true },
-    { id: 5, tag: "Get Prepared for", title: "Amazon Interview", g: 'linear-gradient(135deg,#ef4444,#dc2626)', premium: true },
-];
 const filterTabs = ['All Topics', 'Algorithms', 'Database', 'JavaScript', 'Python', 'Design'];
 
 function DiffBadge({ d }) {
@@ -71,7 +55,7 @@ export default function CodeHub() {
                         <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#fff' }}>IntelliHire <span style={{ color: '#fbbf24' }}>Code</span></h1>
                     </div>
                     <div style={{ display: 'flex', gap: '2px', background: 'rgba(10,6,30,0.5)', borderRadius: '10px', padding: '3px', border: '1px solid rgba(99,102,241,0.08)' }}>
-                        {[{ k: 'explore', l: 'Explore', i: HiOutlineCollection }, { k: 'problems', l: 'Problems', i: HiOutlineBookOpen }].map(({ k, l, i: I }) => (
+                        {[{ k: 'problems', l: 'Problems', i: HiOutlineBookOpen }].map(({ k, l, i: I }) => (
                             <button key={k} onClick={() => setTab(k)} style={{
                                 display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
                                 border: 'none', cursor: 'pointer', color: tab === k ? '#fff' : '#64748b',
@@ -86,65 +70,7 @@ export default function CodeHub() {
                     </div>
                 </motion.div>
 
-                {/* ── EXPLORE TAB ───────────────────────────────────── */}
-                {tab === 'explore' && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        {/* Featured */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#fff' }}>Featured</h2>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#818cf8', padding: '4px 14px', borderRadius: '6px', border: '1px solid rgba(99,102,241,0.2)', cursor: 'pointer' }}>More</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '28px', scrollbarWidth: 'thin' }}>
-                            {courses.map((c, i) => (
-                                <motion.div key={c.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}>
-                                    <Link to="/candidate/code/editor" style={{ textDecoration: 'none' }}>
-                                        <div style={{ width: '210px', minHeight: '220px', borderRadius: '14px', background: c.g, padding: '20px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden', flexShrink: 0, transition: 'transform 0.2s,box-shadow 0.2s', cursor: 'pointer' }}
-                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.3)'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}>
-                                            <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-                                            <div><p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginBottom: '6px' }}>{c.tag}</p><h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{c.title}</h3></div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '14px' }}>
-                                                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}><HiOutlinePlay size={14} style={{ color: '#1e1b4b', marginLeft: '2px' }} /></div>
-                                                <div style={{ display: 'flex', gap: '16px' }}>
-                                                    <div style={{ textAlign: 'center' }}><p style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{c.ch}</p><p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.55)' }}>Chapters</p></div>
-                                                    <div style={{ textAlign: 'center' }}><p style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{c.items}</p><p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.55)' }}>Items</p></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </motion.div>
-                            ))}
-                        </div>
-                        {/* Interview */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#fff' }}>Interview</h2>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#818cf8', padding: '4px 14px', borderRadius: '6px', border: '1px solid rgba(99,102,241,0.2)', cursor: 'pointer' }}>More</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '28px' }}>
-                            {interviewCards.map((c, i) => (
-                                <motion.div key={c.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.06 }}>
-                                    <Link to="/candidate/code/editor" style={{ textDecoration: 'none' }}>
-                                        <div style={{ width: '190px', height: '130px', borderRadius: '14px', background: c.g, padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', flexShrink: 0, transition: 'transform 0.2s', cursor: 'pointer' }}
-                                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                                            {c.premium && <span style={{ position: 'absolute', top: '8px', right: '8px', padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 700, background: 'rgba(239,68,68,0.9)', color: '#fff' }}>Premium</span>}
-                                            <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.65)', marginBottom: '4px' }}>{c.tag}</p>
-                                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{c.title}</h3>
-                                        </div>
-                                    </Link>
-                                </motion.div>
-                            ))}
-                        </div>
-                        {/* CTA */}
-                        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                            style={{ ...card, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-                            <div><h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Ready to code? 🚀</h3><p style={{ fontSize: '13px', color: '#94a3b8' }}>Jump straight into the editor — {stats.total} problems waiting.</p></div>
-                            <Link to="/candidate/code/editor" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: 700, background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: '#fff', textDecoration: 'none', boxShadow: '0 4px 16px rgba(34,197,94,0.3)', transition: 'transform 0.2s' }}
-                                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-                                <HiOutlinePlay size={15} /> Open Editor
-                            </Link>
-                        </motion.div>
-                    </motion.div>
-                )}
+
 
                 {/* ── PROBLEMS TAB ──────────────────────────────────── */}
                 {tab === 'problems' && (

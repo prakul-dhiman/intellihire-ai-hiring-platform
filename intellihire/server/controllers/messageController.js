@@ -96,3 +96,13 @@ exports.getConversations = async (req, res) => {
         errorResponse(res, 500, "Failed to fetch conversations");
     }
 };
+
+// Get total unread count
+exports.getUnreadCount = async (req, res) => {
+    try {
+        const count = await Message.countDocuments({ receiver: req.user.id, read: false });
+        successResponse(res, 200, "Unread count fetched", { count });
+    } catch (error) {
+        errorResponse(res, 500, "Failed to fetch unread count");
+    }
+};

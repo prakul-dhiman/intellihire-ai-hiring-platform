@@ -1,0 +1,86 @@
+name: IntelliHire CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # Backend Setup & Tests
+    - name: Use Node.js for Backend
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: './server/package-lock.json'
+
+    - name: Install Backend Dependencies
+      run: npm ci
+      working-directory: ./server
+
+    - name: Run Backend Tests
+      run: npm test
+      working-directory: ./server
+      env:
+        MONGO_URI: mongodb://localhost:27017/intellihire-test-db
+        REDIS_URL: redis://localhost:6379
+        PORT: 5000
+        JWT_SECRET: supersecretgithubkey
+
+    # Frontend Setup & Build
+    - name: Use Node.js for Frontend
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: './client/package-lock.json'
+
+    - name: Install Frontend Dependencies
+      run: npm ci
+      working-directory: ./client
+
+    - name: Build Frontend
+      run: npm run build
+      working-directory: ./client
+
+  docker-setup:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and Push Server Image
+      run: |
+        cd server
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/intellihire-server:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/intellihire-server:latest
+
+    - name: Build and Push Client Image
+      run: |
+        cd client
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/intellihire-client:latest .
+        docker push ${{ secrets.DOCKER_USERNAME }}/intellihire-client:latest

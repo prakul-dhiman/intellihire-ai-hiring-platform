@@ -12,11 +12,8 @@ export default function ProtectedRoute({ children, role }) {
     if (user?.role === 'admin') return children;
 
     // Role check: if a specific role is required, verify user has it
-    // 'recruiter' role falls back to 'admin' if not explicitly set
     if (role && user?.role !== role) {
-        // Allow any authenticated user to access 'recruiter' routes
-        // (recruiters may be registered as regular users in dev)
-        if (role === 'recruiter') return children;
+        // Redirct to unauthorized page or back to dashboard
         return <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/candidate/dashboard'} replace />;
     }
 

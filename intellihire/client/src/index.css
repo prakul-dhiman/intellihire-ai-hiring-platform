@@ -389,3 +389,8 @@ a {
   outline: 2px solid rgba(99, 102, 241, 0.5);
   outline-offset: 2px;
 }
+
+focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+}

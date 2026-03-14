@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiGrid, FiBriefcase, FiUsers, FiMessageSquare, FiTrendingUp, FiSettings, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import LogoSVG from './LogoSVG';
 
 const navItems = [
     { label: 'Dashboard', path: '/recruiter/dashboard', icon: FiGrid },
@@ -23,9 +24,7 @@ export default function RecruiterSidebar() {
         <aside className="w-64 h-screen flex flex-col pt-8" style={{ background: '#0B0F19', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
             {/* Brand */}
             <div className="px-8 flex items-center gap-3 mb-10 cursor-pointer" onClick={() => navigate('/')}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>
-                    IH
-                </div>
+                <LogoSVG size={36} />
                 <span className="text-white font-bold text-lg tracking-wide">IntelliHire</span>
             </div>
 

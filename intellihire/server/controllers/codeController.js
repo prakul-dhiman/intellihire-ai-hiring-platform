@@ -10,10 +10,21 @@ const { successResponse, errorResponse } = require("../utils/apiResponse");
  * @access  Candidate
  */
 const submitCodeSolution = async (req, res) => {
-    const { language, sourceCode, stdin, expectedOutput } = req.body;
+    const { language, sourceCode, stdin, questionId } = req.body;
+
+    // Secure: Mock database of questions so client cannot send expectedOutput
+    const mockQuestionsDb = {
+        '1': { expectedOutput: 'Hello World\n' },
+        '2': { expectedOutput: '5\n' },
+        '3': { expectedOutput: 'True\n' }
+    };
+
+    const secureExpectedOutput = questionId && mockQuestionsDb[questionId] 
+        ? mockQuestionsDb[questionId].expectedOutput 
+        : ""; // If no questionId match, we just run the code without expecting strict match
 
     // Submit to Judge0
-    const { token } = await submitCode(sourceCode, language, stdin, expectedOutput);
+    const { token } = await submitCode(sourceCode, language, stdin, secureExpectedOutput);
 
     // Save submission record
     const submission = await CodingSubmission.create({
@@ -21,7 +32,7 @@ const submitCodeSolution = async (req, res) => {
         language,
         sourceCode,
         stdin: stdin || "",
-        expectedOutput: expectedOutput || "",
+        expectedOutput: secureExpectedOutput,
         judge0Token: token,
         status: "pending",
     });

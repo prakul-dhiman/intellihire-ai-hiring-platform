@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { HiOutlineViewGrid, HiOutlineChartBar, HiOutlineStar, HiOutlineLogout, HiOutlineDocumentSearch, HiOutlineCog } from 'react-icons/hi';
+import LogoSVG from './LogoSVG';
 
 const navItems = [
     { to: '/admin/dashboard', icon: HiOutlineViewGrid, label: 'Dashboard' },
@@ -25,16 +26,8 @@ export default function AdminSidebar() {
         }}>
             {/* Logo */}
             <div style={{ padding: '24px 20px 16px' }}>
-                <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        width: '36px', height: '36px', borderRadius: '10px',
-                        background: 'linear-gradient(135deg, #6366f1, #7c3aed)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontWeight: 700, fontSize: '14px',
-                        boxShadow: '0 4px 16px rgba(99,102,241,0.25)',
-                    }}>
-                        IH
-                    </div>
+                <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                    <LogoSVG size={36} />
                     <div>
                         <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>IntelliHire</div>
                         <div style={{ fontSize: '11px', fontWeight: 500, color: '#475569', marginTop: '-2px' }}>Admin Panel</div>

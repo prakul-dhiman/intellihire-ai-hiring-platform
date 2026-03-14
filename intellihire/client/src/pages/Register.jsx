@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff, HiOutlineUser } from 'react-icons/hi';
 import { PageTransition } from '../components/Motion';
+import LogoSVG from '../components/LogoSVG';
 
 export default function Register() {
     const { register } = useAuth();
@@ -64,7 +65,7 @@ export default function Register() {
                 <div style={{ width: '100%', maxWidth: '420px' }}>
 
                     <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366f1, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '18px', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(99,102,241,0.25)' }}>IH</div>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><LogoSVG size={54} /></div>
                         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Create your account</h1>
                         <p style={{ fontSize: '14px', color: '#64748b' }}>Join IntelliHire and get started</p>
                     </div>
@@ -79,8 +80,8 @@ export default function Register() {
                             {/* Role */}
                             <div style={{ marginBottom: '20px' }}>
                                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>I am a</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                                    {[{ value: 'candidate', emoji: '👤', label: 'Candidate' }, { value: 'recruiter', emoji: '🏢', label: 'Recruiter' }, { value: 'admin', emoji: '🛡️', label: 'Admin' }].map(({ value, emoji, label }) => (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {[{ value: 'candidate', emoji: '👤', label: 'Candidate' }, { value: 'recruiter', emoji: '🏢', label: 'Recruiter' }].map(({ value, emoji, label }) => (
                                         <button key={value} type="button" onClick={() => setForm({ ...form, role: value })}
                                             style={{
                                                 padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: 500, cursor: 'pointer',

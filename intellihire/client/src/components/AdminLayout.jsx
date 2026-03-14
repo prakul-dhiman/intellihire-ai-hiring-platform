@@ -1,4 +1,5 @@
 import AdminSidebar from './AdminSidebar';
+import LogoSVG from './LogoSVG';
 
 export default function AdminLayout({ children }) {
     return (
@@ -31,9 +32,7 @@ export default function AdminLayout({ children }) {
                         borderBottom: '1px solid rgba(99,102,241,0.1)',
                     }}
                 >
-                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '10px' }}>
-                        IH
-                    </div>
+                    <LogoSVG size={28} />
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>IntelliHire</span>
                 </div>
 

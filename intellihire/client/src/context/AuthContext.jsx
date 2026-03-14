@@ -8,18 +8,15 @@ export function AuthProvider({ children }) {
         const saved = localStorage.getItem('user');
         return saved ? JSON.parse(saved) : null;
     });
-    const [token, setToken] = useState(() => localStorage.getItem('token'));
     const [loading, setLoading] = useState(false);
 
     const login = async (email, password) => {
         setLoading(true);
         try {
             const res = await api.post('/auth/login', { email, password });
-            const { user: userData, token: newToken } = res.data.data;
+            const { user: userData } = res.data.data;
             setUser(userData);
-            setToken(newToken);
             localStorage.setItem('user', JSON.stringify(userData));
-            localStorage.setItem('token', newToken);
             return { success: true, user: userData };
         } catch (err) {
             return { success: false, message: err.response?.data?.message || 'Login failed' };
@@ -32,11 +29,9 @@ export function AuthProvider({ children }) {
         setLoading(true);
         try {
             const res = await api.post('/auth/register', { name, email, password, role });
-            const { user: userData, token: newToken } = res.data.data;
+            const { user: userData } = res.data.data;
             setUser(userData);
-            setToken(newToken);
             localStorage.setItem('user', JSON.stringify(userData));
-            localStorage.setItem('token', newToken);
             return { success: true, user: userData };
         } catch (err) {
             return { success: false, message: err.response?.data?.message || 'Registration failed' };
@@ -45,14 +40,18 @@ export function AuthProvider({ children }) {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (err) {
+            console.error('Logout error', err);
+        }
         setUser(null);
-        setToken(null);
         localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        localStorage.removeItem('token'); // cleanup old code
     };
 
-    const value = { user, token, loading, login, register, logout, isAuthenticated: !!token };
+    const value = { user, loading, login, register, logout, isAuthenticated: !!user };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,4 +1,5 @@
 import RecruiterSidebar from './RecruiterSidebar';
+import LogoSVG from './LogoSVG';
 
 export default function RecruiterLayout({ children }) {
     return (
@@ -25,9 +26,7 @@ export default function RecruiterLayout({ children }) {
                         borderBottom: '1px solid rgba(99,102,241,0.1)',
                     }}
                 >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-indigo-500/20">
-                        IH
-                    </div>
+                    <LogoSVG size={28} />
                     <span className="font-bold text-white tracking-wide">IntelliHire</span>
                 </div>
 

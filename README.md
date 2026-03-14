@@ -1,74 +1,51 @@
-# \# IntelliHire – AI Powered Hiring Platform
+# IntelliHire – AI Powered Hiring Platform
 
-# 
+## Overview
+IntelliHire is an AI-powered technical hiring platform designed to simplify the developer recruitment process.  
+It helps companies screen resumes, conduct coding interviews, and evaluate candidates efficiently.
 
-# \## Overview
+## Features
+- AI Resume Screening
+- Live Coding Interview Environment
+- Candidate Evaluation System
+- Recruiter Dashboard
+- Technical Skill Assessment
 
-# IntelliHire is an AI-powered technical hiring platform designed to simplify the developer recruitment process.  
+## Tech Stack
+Frontend: React / Next.js  
+Backend: Node.js  
+Styling: Tailwind CSS  
+Database: MongoDB  
 
-# It helps companies screen resumes, conduct coding interviews, and evaluate candidates efficiently.
+## Installation
 
-# 
+Clone the repository
 
-# \## Features
+```bash
+git clone https://github.com/prakul-dhiman/intellihire-ai-hiring-platform.git
+```
 
-# \- AI Resume Screening
+Install dependencies
 
-# \- Live Coding Interview Environment
+```bash
+npm install
+```
 
-# \- Candidate Evaluation System
+Run the project
 
-# \- Recruiter Dashboard
+```bash
+npm run dev
+```
 
-# \- Technical Skill Assessment
+## Future Improvements
+- AI interview analysis
+- Real-time video interview integration
+- Coding challenge library
 
-# 
+## Screenshots
 
-# \## Tech Stack
+![Landing Page](screenshots/landing-page.png)
 
-# Frontend: React / Next.js  
+![Coding Environment](screenshots/coding-editor.png)
 
-# Backend: Node.js  
-
-# Styling: Tailwind CSS  
-
-# Database: MongoDB  
-
-# 
-
-# \## Installation
-
-# 
-
-# Clone the repository
-
-# 
-
-# git clone https://github.com/prakul-dhiman/intellihire-ai-hiring-platform.git
-
-# 
-
-# Install dependencies
-
-# 
-
-# npm install
-
-# 
-
-# Run the project
-
-# 
-
-# npm run dev
-
-# 
-
-# \## Future Improvements
-
-# \- AI interview analysis
-
-# \- Real-time video interview integration
-
-# \- Coding challenge library
-
+![Dashboard](screenshots/dashboard.png)

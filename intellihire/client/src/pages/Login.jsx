@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import { PageTransition } from '../components/Motion';
+import LogoSVG from '../components/LogoSVG';
 
 export default function Login() {
     const { login } = useAuth();
@@ -30,6 +31,7 @@ export default function Login() {
             setLoading(false);
         }
     };
+    
 
     return (
         <PageTransition>
@@ -38,7 +40,7 @@ export default function Login() {
 
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, #6366f1, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '18px', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(99,102,241,0.25)' }}>IH</div>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><LogoSVG size={54} /></div>
                         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Welcome back</h1>
                         <p style={{ fontSize: '14px', color: '#64748b' }}>Sign in to your IntelliHire account</p>
                     </div>
@@ -68,6 +70,11 @@ export default function Login() {
                                     <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569', background: 'none', border: 'none', cursor: 'pointer' }}>
                                         {showPassword ? <HiOutlineEyeOff size={18} /> : <HiOutlineEye size={18} />}
                                     </button>
+                                </div>
+                                <div style={{ textAlign: 'right', marginTop: '8px' }}>
+                                    <Link to="/forgot-password" style={{ fontSize: '13px', color: '#818cf8', textDecoration: 'none', fontWeight: 500 }}>
+                                        Forgot Password?
+                                    </Link>
                                 </div>
                             </div>
                             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: '15px' }}>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import api from '../../api/axios';
 
 const GRAD = 'linear-gradient(135deg, #6366f1, #8b5cf6)';
 const FadeUp = ({ children, delay = 0, style = {} }) => (
@@ -19,11 +20,16 @@ export default function FeedbackPage() {
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.name || !form.email || !form.message) return;
-        // In production, this would POST to /api/feedback
-        setSubmitted(true);
+        try {
+            await api.post('/feedback', form);
+            setSubmitted(true);
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            alert('Failed to submit feedback. Please try again.');
+        }
     };
 
     return (

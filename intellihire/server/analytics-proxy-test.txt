@@ -1,1 +1,0 @@
-Admin token obtained: 201\n1. Overview: 200 PASS\n2. Monthly: 200 PASS months: 12\n3. Skills: 200 PASS count: 10\n4. Distribution: 200 PASS\n5. RBAC deny: 403 PASS
