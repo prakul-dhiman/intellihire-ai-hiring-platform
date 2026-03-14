@@ -1,13 +1,31 @@
-const mongoose = require("mongoose");
+import mongoose from 'mongoose';
+import { getConfig } from './validate.js';
 
 const connectDB = async () => {
-    try {
-        const conn = await mongoose.connect(process.env.MONGO_URI);
-        console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    } catch (error) {
-        console.error(`❌ MongoDB Connection Failed: ${error.message}`);
-        process.exit(1);
-    }
+  try {
+    const config = getConfig();
+    
+    const conn = await mongoose.connect(
+      config.database.uri,
+      config.database.options
+    );
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    
+    // Set up connection event listeners
+    mongoose.connection.on('disconnected', () => {
+      console.warn('⚠️ MongoDB Disconnected');
+    });
+
+    mongoose.connection.on('error', (error) => {
+      console.error('❌ MongoDB Connection Error:', error.message);
+    });
+
+    return conn;
+  } catch (error) {
+    console.error(`❌ MongoDB Connection Failed: ${error.message}`);
+    process.exit(1);
+  }
 };
 
-module.exports = connectDB;
+export default connectDB;
