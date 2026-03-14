@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const { createServer } = require('http');
 const { Server: SocketIOServer } = require('socket.io');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 
 // Load environment variables
 dotenv.config();
@@ -47,6 +48,7 @@ app.set('socketio', io); // Important to expose io to controllers
 app.use(helmet());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(cookieParser());
 
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
