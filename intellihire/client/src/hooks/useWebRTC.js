@@ -95,7 +95,7 @@ export function useWebRTC({ sessionCode, role, enabled }) {
             const stream = await startMedia();
             if (!stream || !isMounted) return;
 
-            const socket = io('http://localhost:5000', { transports: ['websocket'] });
+            const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', { transports: ['websocket'], withCredentials: true });
             socketRef.current = socket;
 
             socket.on('connect', () => {
