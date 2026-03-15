@@ -169,6 +169,6 @@ This makes the hiring process **more objective, efficient, and scalable**.
 
 # 👨‍💻 Author
 
-Built with passion by a Computer Science student exploring **AI-powered developer tools and recruitment automation**.
+Built with passion by a Computer Science student Prakul Dhiman exploring **AI-powered developer tools and recruitment automation**.
 
 If you found this project interesting, feel free to ⭐ the repository!
