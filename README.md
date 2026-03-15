@@ -9,6 +9,13 @@ The system combines **real-time collaborative interviews, automated behavioral a
 Built with a scalable **full-stack architecture**, IntelliHire enables seamless interaction between candidates and recruiters during live technical interviews.
 
 ---
+🌐 **Live Demo**
+
+**Frontend**
+https://intellihire-client-chi.vercel.app
+
+**Backend API**
+https://intellihire-server-7u68.onrender.com
 
 # ✨ Key Features
 
@@ -166,9 +173,17 @@ This makes the hiring process **more objective, efficient, and scalable**.
 • interview recording & playback
 
 ---
+**📸 Screenshots**
+screenshots in the assets folder.
+
+screenshots/
+login.png
+dashboard.png
+interview.png
+coding-test.png
 
 # 👨‍💻 Author
 
-Built with passion by a Computer Science student Prakul Dhiman exploring **AI-powered developer tools and recruitment automation**.
+Built with passion by a Computer Science student **Prakul Dhiman** exploring **AI-powered developer tools and recruitment automation**.
 
 If you found this project interesting, feel free to ⭐ the repository!
