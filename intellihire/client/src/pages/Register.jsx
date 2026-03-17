@@ -48,8 +48,11 @@ export default function Register() {
         try {
             const data = await register(form.name, form.email, form.password, form.role);
             if (data.success) {
-                const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
-                navigate(navPath);
+                // BUG FIX: Delay to allow AuthContext to sync
+                setTimeout(() => {
+                    const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
+                    navigate(navPath);
+                }, 100);
             }
             else setError(data.message || 'Registration failed');
         } catch (err) {

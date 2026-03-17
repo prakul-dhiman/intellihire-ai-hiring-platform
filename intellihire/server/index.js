@@ -147,6 +147,15 @@ io.on('connection', (socket) => {
   socket.on("answer", ({ roomId, answer }) => socket.to(roomId).emit("answer", { answer }));
   socket.on("ice-candidate", ({ roomId, candidate }) => socket.to(roomId).emit("ice-candidate", { candidate }));
 
+  // RT-01 FIX: Real-time code synchronization
+  socket.on("code-change", ({ roomId, code }) => {
+    socket.to(roomId).emit("code-change", { code });
+  });
+
+  socket.on("sync-code", ({ roomId, code }) => {
+    socket.to(roomId).emit("code-change", { code });
+  });
+
   // RT-02 FIX: Clean up rooms on disconnect so stale socket IDs don't persist
   socket.on('disconnect', () => {
     console.log(`❌ User disconnected: ${socket.id}`);

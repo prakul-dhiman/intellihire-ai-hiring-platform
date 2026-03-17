@@ -21,8 +21,11 @@ export default function Login() {
         try {
             const data = await login(form.email, form.password);
             if (data.success) {
-                const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
-                navigate(navPath);
+                // BUG FIX: Slight delay to allow AuthContext state to settle before navigation
+                setTimeout(() => {
+                    const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
+                    navigate(navPath);
+                }, 100);
             }
             else setError(data.message || 'Login failed');
         } catch (err) {

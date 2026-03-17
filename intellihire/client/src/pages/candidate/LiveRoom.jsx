@@ -64,6 +64,7 @@ export default function LiveRoom() {
     const [activeAlert, setActiveAlert] = useState(null);
     const [strikes, setStrikes] = useState(0);
     const [tabViolation, setTabViolation] = useState(false);
+    const blockRemoteUpdates = useRef(false);
 
     /* ── refs ───────────────────────────────────────── */
     const canvasRef = useRef(null);
@@ -79,6 +80,7 @@ export default function LiveRoom() {
         localReady,
         error: rtcError,
         sendChatMsg,
+        sendCodeChange,
     } = useWebRTC({
         sessionCode: sessionInfo?.code || '',
         role: 'candidate',
@@ -99,13 +101,27 @@ export default function LiveRoom() {
 
     /* ── Listen for chat messages from recruiter ─────── */
     useEffect(() => {
-        const handler = (e) => {
+        const chatHandler = (e) => {
             const { from, text } = e.detail;
             setChatMsgs(m => [...m, { from, text }]);
         };
-        window.addEventListener('rtc-chat', handler);
-        return () => window.removeEventListener('rtc-chat', handler);
-    }, []);
+        const codeHandler = (e) => {
+            blockRemoteUpdates.current = true;
+            setCode(e.detail.code);
+            setTimeout(() => blockRemoteUpdates.current = false, 50);
+        };
+        const syncHandler = () => {
+            sendCodeChange(code);
+        };
+        window.addEventListener('rtc-chat', chatHandler);
+        window.addEventListener('rtc-code', codeHandler);
+        window.addEventListener('rtc-sync-request', syncHandler);
+        return () => {
+            window.removeEventListener('rtc-chat', chatHandler);
+            window.removeEventListener('rtc-code', codeHandler);
+            window.removeEventListener('rtc-sync-request', syncHandler);
+        };
+    }, [code, sendCodeChange]); // code is needed for syncHandler
 
     /* ── AI Proctoring analysis loop ─────────────────── */
     useEffect(() => {
@@ -395,7 +411,12 @@ export default function LiveRoom() {
                             height="100%"
                             theme={vscodeDark}
                             extensions={[LANGS[lang].ext]}
-                            onChange={v => setCode(v)}
+                            onChange={v => {
+                                setCode(v);
+                                if (!blockRemoteUpdates.current) {
+                                    sendCodeChange(v);
+                                }
+                            }}
                             style={{ fontSize: 13, height: '100%' }}
                         />
                     </div>

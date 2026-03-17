@@ -146,7 +146,7 @@ export default function CodeHub() {
                             </div>
                             <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
                                 {filtered.map((p, i) => (
-                                    <Link key={p.id} to={`/candidate/code/editor?problem=${p.id}`} style={{
+                                    <Link key={p.id} to={`/candidate/code/editor/${p.id}`} style={{
                                         display: 'grid', gridTemplateColumns: '36px 1fr 80px 70px', alignItems: 'center', padding: '11px 18px',
                                         textDecoration: 'none', borderBottom: '1px solid rgba(99,102,241,0.03)',
                                         background: i % 2 === 0 ? 'rgba(10,6,30,0.15)' : 'transparent', transition: 'background 0.12s',

@@ -3,6 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { problems } from '../../data/problems';
 import api from '../../api/axios';
 import { useWebRTC } from '../../hooks/useWebRTC';
+import CodeMirror from '@uiw/react-codemirror';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { java } from '@codemirror/lang-java';
+
+const LANGS = {
+    javascript: { ext: javascript(), label: 'JavaScript' },
+    python: { ext: python(), label: 'Python' },
+    java: { ext: java(), label: 'Java' },
+};
 
 const GRAD = 'linear-gradient(135deg,#6366f1,#8b5cf6)';
 const BG = '#07090f';
@@ -23,6 +34,9 @@ export default function RecruiterRoom() {
     const [rating, setRating] = useState(0);
     const [timer, setTimer] = useState(0);
     const timerRef = useRef(null);
+    const [code, setCode] = useState('// Waiting for candidate to start...');
+    const [lang, setLang] = useState('javascript');
+    const blockRemoteUpdates = useRef(false);
 
     const [creating, setCreating] = useState(false);
     const [createError, setCreateError] = useState('');
@@ -36,6 +50,7 @@ export default function RecruiterRoom() {
         localReady,
         error: rtcError,
         sendChatMsg,
+        sendCodeChange,
     } = useWebRTC({ sessionCode, role: 'recruiter', enabled: phase === 'live' });
 
     /* ── Interview timer ────────────────────────────────────────── */
@@ -56,12 +71,21 @@ export default function RecruiterRoom() {
     // we do it via a custom event bus approach using the hook's socket event.
     // For simplicity, the hook fires window events when chat is received.
     useEffect(() => {
-        const handler = (e) => {
+        const chatHandler = (e) => {
             const { from, text } = e.detail;
             setChatMsgs(m => [...m, { from, text }]);
         };
-        window.addEventListener('rtc-chat', handler);
-        return () => window.removeEventListener('rtc-chat', handler);
+        const codeHandler = (e) => {
+            blockRemoteUpdates.current = true;
+            setCode(e.detail.code);
+            setTimeout(() => blockRemoteUpdates.current = false, 50);
+        };
+        window.addEventListener('rtc-chat', chatHandler);
+        window.addEventListener('rtc-code', codeHandler);
+        return () => {
+            window.removeEventListener('rtc-chat', chatHandler);
+            window.removeEventListener('rtc-code', codeHandler);
+        };
     }, []);
 
     /* ── Handlers ───────────────────────────────────────────────── */
@@ -265,19 +289,24 @@ export default function RecruiterRoom() {
                 {/* CENTER — Live code monitor placeholder */}
                 <div style={{ display: 'flex', flexDirection: 'column', background: '#06060e', overflow: 'hidden' }}>
                     <div style={{ padding: '8px 14px', borderBottom: '1px solid #1a1a2e', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>👁️ LIVE CODE MONITOR</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b' }}>👁️ LIVE CODE MONITOR (READ ONLY)</span>
+                        <select value={lang} onChange={e => setLang(e.target.value)}
+                            style={{ background: '#0e0e1a', border: '1px solid #1a1a2e', borderRadius: 6, color: '#94a3b8', fontSize: 10, padding: '2px 6px', cursor: 'pointer', outline: 'none' }}>
+                            {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                        </select>
                         <span style={{ fontSize: 11, color: peerConnected ? '#34d399' : '#475569', marginLeft: 'auto' }}>
-                            {peerConnected ? '● Candidate is coding...' : '○ Waiting for candidate...'}
+                            {peerConnected ? '● Viewing Candidate Stream' : '○ Waiting for candidate...'}
                         </span>
                     </div>
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ textAlign: 'center', padding: 32 }}>
-                            <div style={{ fontSize: 40, marginBottom: 12 }}>💻</div>
-                            <p style={{ color: '#475569', fontSize: 13, lineHeight: 1.7 }}>
-                                The candidate's code editor is on their screen.<br />
-                                Video call is active on the right →
-                            </p>
-                        </div>
+                    <div style={{ flex: 1, overflow: 'auto' }}>
+                        <CodeMirror
+                            value={code}
+                            height="100%"
+                            theme={vscodeDark}
+                            extensions={[LANGS[lang].ext]}
+                            readOnly={true}
+                            style={{ fontSize: 13, height: '100%' }}
+                        />
                     </div>
                 </div>
 

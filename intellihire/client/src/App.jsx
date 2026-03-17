@@ -110,6 +110,7 @@ export default function App() {
             <Route path="/candidate/resume" element={<ProtectedRoute role="candidate"><ResumeForm /></ProtectedRoute>} />
             <Route path="/candidate/code" element={<ProtectedRoute role="candidate"><CodeHub /></ProtectedRoute>} />
             <Route path="/candidate/code/editor" element={<ProtectedRoute role="candidate"><CodeEditor /></ProtectedRoute>} />
+            <Route path="/candidate/code/editor/:id" element={<ProtectedRoute role="candidate"><CodeEditor /></ProtectedRoute>} />
             <Route path="/candidate/interview" element={<ProtectedRoute role="candidate"><Interview /></ProtectedRoute>} />
             <Route path="/candidate/profile" element={<ProtectedRoute role="candidate"><Profile /></ProtectedRoute>} />
             <Route path="/candidate/live-room" element={<ProtectedRoute role="candidate"><LiveRoom /></ProtectedRoute>} />

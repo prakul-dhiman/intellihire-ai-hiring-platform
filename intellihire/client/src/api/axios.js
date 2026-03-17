@@ -17,13 +17,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            // Only redirect if not already on auth pages
-            if (!window.location.pathname.startsWith('/login') &&
-                !window.location.pathname.startsWith('/register')) {
-                window.location.href = '/login';
+        const status = error.response?.status;
+        const currentPath = window.location.pathname;
+
+        if (status === 401) {
+            // Avoid looping redirects if already on auth pages
+            const isAuthPage = currentPath.startsWith('/login') || currentPath.startsWith('/register');
+            const isAuthRequest = error.config.url.includes('/auth/login') || error.config.url.includes('/auth/register');
+
+            if (!isAuthPage && !isAuthRequest) {
+                // Clear state
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+                window.location.href = '/login?expired=true';
             }
         }
         return Promise.reject(error);

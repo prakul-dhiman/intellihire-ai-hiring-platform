@@ -32,6 +32,10 @@ export function useWebRTC({ sessionCode, role, enabled }) {
         socketRef.current?.emit('chat-message', { roomId: sessionCode, from: role, text });
     }, [sessionCode, role]);
 
+    const sendCodeChange = useCallback((code) => {
+        socketRef.current?.emit('code-change', { roomId: sessionCode, code });
+    }, [sessionCode]);
+
     useEffect(() => {
         if (!enabled || !sessionCode) return;
 
@@ -107,6 +111,11 @@ export function useWebRTC({ sessionCode, role, enabled }) {
 
             // ── Recruiter creates offer when candidate joins ─────────────
             socket.on('peer-joined', async () => {
+                if (role === 'candidate') {
+                    // Notify component to send current code to the new recruiter
+                    window.dispatchEvent(new CustomEvent('rtc-sync-request'));
+                }
+                
                 if (role !== 'recruiter') return;
                 const pc = createPC(stream);
                 const offer = await pc.createOffer();
@@ -144,6 +153,11 @@ export function useWebRTC({ sessionCode, role, enabled }) {
                 window.dispatchEvent(new CustomEvent('rtc-chat', { detail: { from, text } }));
             });
 
+            // ── Incoming code change ────────────────────────────────────
+            socket.on('code-change', ({ code }) => {
+                window.dispatchEvent(new CustomEvent('rtc-code', { detail: { code } }));
+            });
+
             // ── Peer disconnected ────────────────────────────────────────
             socket.on('peer-left', () => {
                 setPeerConnected(false);
@@ -175,5 +189,6 @@ export function useWebRTC({ sessionCode, role, enabled }) {
         localReady,
         error,
         sendChatMsg,
+        sendCodeChange,
     };
 }
