@@ -16,6 +16,7 @@ const connectDB = require('./config/db.js');
 // Import middlewares
 const errorHandler = require('./middlewares/errorHandler.js');
 const { generalLimiter, authLimiter, codeLimiter } = require('./middlewares/rateLimiter.js');
+const mongoSanitize = require('express-mongo-sanitize'); // SEC-03: NoSQL injection prevention
 
 // Import routes
 const authRoutes = require('./routes/authRoutes.js');
@@ -49,6 +50,8 @@ app.use(helmet());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
+// SEC-03 FIX: Strip NoSQL injection operators ($gt, $where, etc.) from all inputs
+app.use(mongoSanitize());
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -111,6 +114,10 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ─── Socket.io Logic ─────────────────────────────────────────────
+// BUG-04 FIX: rooms declared OUTSIDE the connection handler so state
+// is shared across all socket connections, not reset per-connection.
+const rooms = {};
+
 io.on('connection', (socket) => {
   console.log(`✅ User linked: ${socket.id}`);
 
@@ -120,23 +127,42 @@ io.on('connection', (socket) => {
   });
 
   // roomId → { recruiter: socketId, candidate: socketId }
-  const rooms = {};
   socket.on("join-room", ({ roomId, role }) => {
     socket.join(roomId);
     if (!rooms[roomId]) rooms[roomId] = {};
     rooms[roomId][role] = socket.id;
     socket.to(roomId).emit("peer-joined", { role });
+    // If recruiter joins and candidate is already in, notify recruiter
     if (role === 'recruiter' && rooms[roomId]['candidate']) {
         socket.emit('peer-joined', { role: 'candidate' });
     }
+    // If candidate joins and recruiter is already in, notify candidate
+    if (role === 'candidate' && rooms[roomId]['recruiter']) {
+        socket.emit('peer-joined', { role: 'recruiter' });
+    }
+    console.log(`🚪 ${role} joined room: ${roomId}`);
   });
 
   socket.on("offer", ({ roomId, offer }) => socket.to(roomId).emit("offer", { offer }));
   socket.on("answer", ({ roomId, answer }) => socket.to(roomId).emit("answer", { answer }));
   socket.on("ice-candidate", ({ roomId, candidate }) => socket.to(roomId).emit("ice-candidate", { candidate }));
 
+  // RT-02 FIX: Clean up rooms on disconnect so stale socket IDs don't persist
   socket.on('disconnect', () => {
     console.log(`❌ User disconnected: ${socket.id}`);
+    for (const roomId in rooms) {
+      for (const role in rooms[roomId]) {
+        if (rooms[roomId][role] === socket.id) {
+          delete rooms[roomId][role];
+          io.to(roomId).emit('peer-left', { role });
+          console.log(`🚪 ${role} left room: ${roomId}`);
+        }
+      }
+      // Remove empty rooms
+      if (Object.keys(rooms[roomId]).length === 0) {
+        delete rooms[roomId];
+      }
+    }
   });
 });
 

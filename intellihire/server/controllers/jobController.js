@@ -114,7 +114,13 @@ exports.updateJob = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Not authorized to update this job' });
         }
 
-        job = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        // SEC-02 FIX: Only allow specific fields to be updated — never pass req.body directly
+        const { title, company, description, requiredSkills, preferredSkills, experience, jobType, location, salaryRange, deadline, positions, codingTestRequired, status } = req.body;
+        const allowedUpdates = { title, company, description, requiredSkills, preferredSkills, experience, jobType, location, salaryRange, deadline, positions, codingTestRequired, status };
+        // Remove undefined fields
+        Object.keys(allowedUpdates).forEach(k => allowedUpdates[k] === undefined && delete allowedUpdates[k]);
+
+        job = await Job.findByIdAndUpdate(req.params.id, allowedUpdates, { new: true, runValidators: true });
         res.status(200).json({ success: true, data: job });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server Error' });
@@ -153,8 +159,8 @@ exports.applyToJob = async (req, res) => {
             return res.status(400).json({ success: false, message: 'You have already applied' });
         }
 
-        // 1. Fetch Candidate's Resume details
-        const resume = await Resume.findOne({ user: req.user._id });
+        // BUG-03 FIX: Resume model uses `candidateId` not `user`
+        const resume = await Resume.findOne({ candidateId: req.user._id });
         let matchScore = 0;
         let matchDetails = { skillsMatch: 0, experienceMatch: 0, projectMatch: 0, educationMatch: 0 };
 

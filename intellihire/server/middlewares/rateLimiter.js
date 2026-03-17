@@ -17,11 +17,11 @@ const generalLimiter = rateLimit({
 
 /**
  * Strict limiter for auth routes (login/register)
- * 10 requests per 15 minutes per IP
+ * 10 requests per 15 minutes per IP — prevents brute-force attacks
  */
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100, // increased for easy dev testing
+    max: 10, // BUG-07 FIX: was incorrectly set to 100 (same as general limiter)
     standardHeaders: true,
     legacyHeaders: false,
     message: {

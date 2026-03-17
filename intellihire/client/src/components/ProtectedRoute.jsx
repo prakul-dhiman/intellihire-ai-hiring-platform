@@ -1,8 +1,18 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+// BUG-06 FIX: Each role now redirects to its correct dashboard
+const ROLE_DASHBOARDS = {
+    admin: '/admin/dashboard',
+    recruiter: '/recruiter/dashboard',
+    candidate: '/candidate/dashboard',
+};
+
 export default function ProtectedRoute({ children, role }) {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, sessionChecked } = useAuth();
+
+    // Wait for session verification before making auth decisions (BUG-05 support)
+    if (!sessionChecked) return null;
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
@@ -13,8 +23,8 @@ export default function ProtectedRoute({ children, role }) {
 
     // Role check: if a specific role is required, verify user has it
     if (role && user?.role !== role) {
-        // Redirct to unauthorized page or back to dashboard
-        return <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/candidate/dashboard'} replace />;
+        const fallback = ROLE_DASHBOARDS[user?.role] || '/login';
+        return <Navigate to={fallback} replace />;
     }
 
     return children;

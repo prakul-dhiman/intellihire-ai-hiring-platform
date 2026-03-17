@@ -56,3 +56,9 @@ server/test-script.js
 server/test_db.js
 server/seed_users.js
 server/seedCandidates.js
+
+# CODE-04 FIX: Debug scripts should never be committed
+server/debug_*.js
+server/err*.txt
+server/install_*.txt
+server/out.txt

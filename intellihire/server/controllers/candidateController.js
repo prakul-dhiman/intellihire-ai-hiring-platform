@@ -299,7 +299,8 @@ const submitInterview = async (req, res) => {
         const fumblePenalty = Math.min(30, totalFumbles * 2); // Max 30 point penalty for fumbles
         const durationPenalty = (totalDuration > 0 && totalDuration < 30) ? 10 : 0; // Penalty if they rushed
 
-        totalScore = baseScore - fumblePenalty - durationPenalty + (Math.random() * 5);
+        // BUG-08 FIX: Removed Math.random() — scores must be deterministic in a hiring system
+        totalScore = baseScore - fumblePenalty - durationPenalty;
         const finalInterviewScore = Math.min(100, Math.floor(totalScore > 0 ? Math.max(20, totalScore) : 0)); // Floor it at 20, cap at 100
 
         // Generate Feedback

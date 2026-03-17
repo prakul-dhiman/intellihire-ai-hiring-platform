@@ -4,149 +4,175 @@ const { successResponse, errorResponse } = require("../utils/apiResponse");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 
-// Cookie configuration for cross-domain deployment
-const cookieOptions = {
+// Cookie configuration
+const getCookieOptions = () => ({
   httpOnly: true,
-  secure: true,          // required for HTTPS
-  sameSite: "none",      // required for cross-domain cookies
-  maxAge: 30 * 24 * 60 * 60 * 1000
-};
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+});
 
 /**
- * @desc    Register a new user
- * @route   POST /api/auth/register
+ * @desc Register a new user
  */
 const register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  try {
+    const { name, email, password, role: rawRole } = req.body;
 
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    return errorResponse(res, 400, "User with this email already exists");
-  }
+    // Secure role handling
+    const allowedRoles = ["candidate", "recruiter"];
+    const role = allowedRoles.includes(rawRole) ? rawRole : "candidate";
 
-  const user = await User.create({ name, email, password, role });
-
-  const token = generateToken(user);
-
-  res.cookie("token", token, cookieOptions);
-
-  successResponse(res, 201, "User registered successfully", {
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return errorResponse(res, 400, "User with this email already exists");
     }
-  });
+
+    const user = await User.create({ name, email, password, role });
+
+    const token = generateToken(user);
+
+    res.cookie("token", token, getCookieOptions());
+
+    return successResponse(res, 201, "User registered successfully", {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    return errorResponse(res, 500, err.message || "Registration failed");
+  }
 };
 
 /**
- * @desc    Login user
- * @route   POST /api/auth/login
+ * @desc Login user
  */
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email }).select("+password");
-
-  if (!user) {
-    return errorResponse(res, 401, "Invalid email or password");
-  }
-
-  const isMatch = await user.matchPassword(password);
-
-  if (!isMatch) {
-    return errorResponse(res, 401, "Invalid email or password");
-  }
-
-  const token = generateToken(user);
-
-  // send login alert email
-  sendEmail(
-    user.email,
-    "IntelliHire Login Alert",
-    `User ${user.name} (${user.email}) has just logged in.`,
-    `<p><strong>User Login Alert:</strong></p>
-     <p>Name: ${user.name}</p>
-     <p>Email: ${user.email}</p>
-     <p>Role: ${user.role}</p>
-     <p>Time: ${new Date().toLocaleString()}</p>`
-  );
-
-  res.cookie("token", token, cookieOptions);
-
-  successResponse(res, 200, "Login successful", {
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      return errorResponse(res, 401, "Invalid email or password");
     }
-  });
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return errorResponse(res, 401, "Invalid email or password");
+    }
+
+    const token = generateToken(user);
+
+    res.cookie("token", token, getCookieOptions());
+
+    // Optional login alert email
+    try {
+      await sendEmail(
+        user.email,
+        "IntelliHire Login Alert",
+        `User ${user.name} logged in`,
+        `<p><strong>Login Alert</strong></p>
+         <p>Name: ${user.name}</p>
+         <p>Email: ${user.email}</p>
+         <p>Time: ${new Date().toLocaleString()}</p>`
+      );
+    } catch (err) {
+      console.log("Email failed:", err.message);
+    }
+
+    return successResponse(res, 200, "Login successful", {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    return errorResponse(res, 500, err.message || "Login failed");
+  }
 };
 
 /**
- * @desc    Get logged in user
- * @route   GET /api/auth/me
+ * @desc Get logged-in user
  */
 const getMe = async (req, res) => {
-  const user = await User.findById(req.user.id);
-
-  successResponse(res, 200, "User profile fetched", { user });
+  try {
+    const user = await User.findById(req.user.id);
+    return successResponse(res, 200, "User profile fetched", { user });
+  } catch (err) {
+    return errorResponse(res, 500, err.message || "Failed to fetch profile");
+  }
 };
 
 /**
- * @desc    Logout user
- * @route   POST /api/auth/logout
+ * @desc Logout user
  */
 const logout = async (req, res) => {
   res.cookie("token", "none", {
-    ...cookieOptions,
-    expires: new Date(Date.now() + 1000)
+    ...getCookieOptions(),
+    expires: new Date(Date.now() + 1000),
   });
 
-  successResponse(res, 200, "Logout successful");
+  return successResponse(res, 200, "Logout successful");
 };
 
 /**
- * @desc    Forgot password
+ * @desc Forgot password
  */
 const forgotPassword = async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
-
-  if (!user) {
-    return errorResponse(res, 404, "There is no user with that email");
-  }
-
-  const resetToken = user.getResetPasswordToken();
-  await user.save({ validateBeforeSave: false });
-
-  const frontendUrl = process.env.FRONTEND_URL;
-  const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
-
-  const message = `Reset your password using this link:\n\n${resetUrl}`;
-
   try {
-    await sendEmail(
-      user.email,
-      "Password Reset Token",
-      message,
-      `<p>${message.replace(/\n/g, "<br>")}</p>`
-    );
+    const user = await User.findOne({ email: req.body.email });
 
-    successResponse(res, 200, "Email sent");
-  } catch (err) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+    // Security: don't reveal if user exists
+    if (!user) {
+      return successResponse(
+        res,
+        200,
+        "If that email exists, a reset link has been sent."
+      );
+    }
 
+    const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    return errorResponse(res, 500, "Email could not be sent");
+    const frontendUrl =
+      process.env.FRONTEND_URL || "http://localhost:5173";
+
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+    const message = `Reset your password:\n\n${resetUrl}`;
+
+    try {
+      await sendEmail(
+        user.email,
+        "Password Reset Token",
+        message,
+        `<p>${message.replace(/\n/g, "<br>")}</p>`
+      );
+
+      return successResponse(
+        res,
+        200,
+        "If that email exists, a reset link has been sent."
+      );
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      return errorResponse(res, 500, "Email could not be sent");
+    }
+  } catch (err) {
+    return errorResponse(res, 500, err.message || "Request failed");
   }
 };
 
 /**
- * @desc    Reset password
+ * @desc Reset password
  */
 const resetPassword = async (req, res) => {
   const resetPasswordToken = crypto
@@ -156,7 +182,7 @@ const resetPassword = async (req, res) => {
 
   const user = await User.findOne({
     resetPasswordToken,
-    resetPasswordExpire: { $gt: Date.now() }
+    resetPasswordExpire: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -164,7 +190,6 @@ const resetPassword = async (req, res) => {
   }
 
   user.password = req.body.password;
-
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 
@@ -172,9 +197,9 @@ const resetPassword = async (req, res) => {
 
   const token = generateToken(user);
 
-  res.cookie("token", token, cookieOptions);
+  res.cookie("token", token, getCookieOptions());
 
-  successResponse(res, 200, "Password reset successful");
+  return successResponse(res, 200, "Password reset successful");
 };
 
 module.exports = {
@@ -183,5 +208,5 @@ module.exports = {
   getMe,
   logout,
   forgotPassword,
-  resetPassword
+  resetPassword,
 };
