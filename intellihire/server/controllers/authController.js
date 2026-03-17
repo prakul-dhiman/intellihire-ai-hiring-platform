@@ -68,20 +68,16 @@ const login = async (req, res) => {
 
     res.cookie("token", token, getCookieOptions());
 
-    // Optional login alert email
-    try {
-      await sendEmail(
-        user.email,
-        "IntelliHire Login Alert",
-        `User ${user.name} logged in`,
-        `<p><strong>Login Alert</strong></p>
-         <p>Name: ${user.name}</p>
-         <p>Email: ${user.email}</p>
-         <p>Time: ${new Date().toLocaleString()}</p>`
-      );
-    } catch (err) {
-      console.log("Email failed:", err.message);
-    }
+    // Speed Improvement: Don't await the email sending. Let it run in the background.
+    sendEmail(
+      user.email,
+      "IntelliHire Login Alert",
+      `User ${user.name} logged in`,
+      `<p><strong>Login Alert</strong></p>
+       <p>Name: ${user.name}</p>
+       <p>Email: ${user.email}</p>
+       <p>Time: ${new Date().toLocaleString()}</p>`
+    ).catch(err => console.error("Login alert email failed:", err.message));
 
     return successResponse(res, 200, "Login successful", {
       user: {
