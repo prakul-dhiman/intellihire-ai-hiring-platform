@@ -15,27 +15,29 @@ export function AuthProvider({ children }) {
         }
     });
     const [loading, setLoading] = useState(false);
-    const [sessionChecked, setSessionChecked] = useState(false);
 
-    // BUG-05 FIX: Verify the session cookie is still valid on every page refresh.
-    // If the cookie expired server-side, clear the stale localStorage user.
+    // PERF FIX: Start as true (optimistic) — trust localStorage immediately so pages
+    // load without waiting for a network call. Background verification quietly clears
+    // stale state if the server cookie has actually expired.
+    const [sessionChecked, setSessionChecked] = useState(true);
+
     useEffect(() => {
+        // Only verify if we think the user is logged in
+        if (!user) return;
         const verifySession = async () => {
-            if (!user) {
-                setSessionChecked(true);
-                return;
-            }
             try {
                 await api.get('/auth/me');
-            } catch {
-                // Cookie is invalid / expired — clear stale state
-                setUser(null);
-                localStorage.removeItem('user');
-            } finally {
-                setSessionChecked(true);
+            } catch (err) {
+                // Cookie is invalid/expired — silently clear stale localStorage
+                if (err.response?.status === 401) {
+                    setUser(null);
+                    localStorage.removeItem('user');
+                }
             }
         };
-        verifySession();
+        // Small delay so the UI renders first, then we verify in the background
+        const timer = setTimeout(verifySession, 500);
+        return () => clearTimeout(timer);
     }, []); // run once on mount only
 
     const login = async (email, password) => {
@@ -79,7 +81,6 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('token'); // cleanup old code
     };
 
-    // Wait for session check before rendering children to prevent auth flicker
     const value = { user, loading, sessionChecked, login, register, logout, isAuthenticated: !!user };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
