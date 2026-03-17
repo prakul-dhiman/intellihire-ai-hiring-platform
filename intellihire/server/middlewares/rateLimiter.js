@@ -21,7 +21,7 @@ const generalLimiter = rateLimit({
  */
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10, // BUG-07 FIX: was incorrectly set to 100 (same as general limiter)
+    max: 15, // Increased slightly to 15 to allow for more testing cycles while remaining secure
     standardHeaders: true,
     legacyHeaders: false,
     message: {

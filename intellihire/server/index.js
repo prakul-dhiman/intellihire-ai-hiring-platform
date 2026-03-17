@@ -92,7 +92,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── API Routes ──────────────────────────────────────────────────
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/candidate', candidateRoutes); // Fixed path to /api/candidate
 app.use('/api/admin', adminRoutes);

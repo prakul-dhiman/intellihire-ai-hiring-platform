@@ -7,10 +7,12 @@ const {
     validateEmail,
     validatePassword,
 } = require("../middlewares/validate");
+const { authLimiter } = require("../middlewares/rateLimiter");
 
 // POST /api/auth/register
 router.post(
     "/register",
+    authLimiter,
     validateFields("name", "email", "password"),
     validateEmail,
     validatePassword,
@@ -20,6 +22,7 @@ router.post(
 // POST /api/auth/login
 router.post(
     "/login",
+    authLimiter,
     validateFields("email", "password"),
     validateEmail,
     login
