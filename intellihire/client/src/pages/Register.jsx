@@ -47,16 +47,14 @@ export default function Register() {
         setLoading(true);
         try {
             const data = await register(form.name, form.email, form.password, form.role);
-            if (data.success) {
-                // BUG FIX: Delay to allow AuthContext to sync
-                setTimeout(() => {
-                    const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
-                    navigate(navPath);
-                }, 100);
+            if (data.success && data.user) {
+                const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
+                navigate(navPath, { replace: true });
+            } else {
+                setError(data.message || 'Registration failed - no user data returned');
             }
-            else setError(data.message || 'Registration failed');
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed');
+            setError(err.response?.data?.message || err.message || 'Registration failed');
         } finally {
             setLoading(false);
         }

@@ -16,14 +16,15 @@ export function AuthProvider({ children }) {
     });
     const [loading, setLoading] = useState(false);
 
-    // PERF FIX: Start as true (optimistic) — trust localStorage immediately so pages
-    // load without waiting for a network call. Background verification quietly clears
-    // stale state if the server cookie has actually expired.
-    const [sessionChecked, setSessionChecked] = useState(true);
+    const [sessionChecked, setSessionChecked] = useState(false);
 
     useEffect(() => {
-        // Only verify if we think the user is logged in
-        if (!user) return;
+        // If no user in localStorage, we consider session checked immediately
+        if (!user) {
+            setSessionChecked(true);
+            return;
+        }
+
         const verifySession = async () => {
             try {
                 await api.get('/auth/me');
@@ -33,6 +34,8 @@ export function AuthProvider({ children }) {
                     setUser(null);
                     localStorage.removeItem('user');
                 }
+            } finally {
+                setSessionChecked(true);
             }
         };
         // Small delay so the UI renders first, then we verify in the background
@@ -47,6 +50,7 @@ export function AuthProvider({ children }) {
             const { user: userData } = res.data.data;
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
+            setSessionChecked(true); // Ensure session is marked as checked
             return { success: true, user: userData };
         } catch (err) {
             return { success: false, message: err.response?.data?.message || 'Login failed' };
@@ -59,12 +63,18 @@ export function AuthProvider({ children }) {
         setLoading(true);
         try {
             const res = await api.post('/auth/register', { name, email, password, role });
+            
+            if (!res.data || !res.data.data || !res.data.data.user) {
+                throw new Error('Invalid response from server');
+            }
+
             const { user: userData } = res.data.data;
             setUser(userData);
             localStorage.setItem('user', JSON.stringify(userData));
+            setSessionChecked(true); // Ensure session is marked as checked
             return { success: true, user: userData };
         } catch (err) {
-            return { success: false, message: err.response?.data?.message || 'Registration failed' };
+            return { success: false, message: err.response?.data?.message || err.message || 'Registration failed' };
         } finally {
             setLoading(false);
         }

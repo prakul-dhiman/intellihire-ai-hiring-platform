@@ -77,7 +77,7 @@ export default function Navbar() {
             <div className="max-w-[1200px] w-full mx-auto px-10 md:px-12 flex items-center justify-between">
 
                 {/* ── Logo ── */}
-                <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', flexShrink: 0 }}>
+                <Link to={isAuthenticated ? dashboardLink : "/"} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', flexShrink: 0 }}>
                     <LogoSVG size={42} />
                     <span style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em' }}>
                         IntelliHire

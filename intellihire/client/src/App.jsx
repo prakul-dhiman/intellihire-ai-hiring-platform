@@ -63,8 +63,16 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, sessionChecked } = useAuth();
   const location = useLocation();
+
+  if (!sessionChecked) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#07090f]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
   const isLanding = location.pathname === '/';
 
   const isAdminRoute = location.pathname.startsWith('/admin');
@@ -135,7 +143,8 @@ export default function App() {
             <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
 
             {/* Catch-all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Catch-all: Redirect to dashboard if logged in, otherwise landing */}
+            <Route path="*" element={isAuthenticated ? <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </main>
