@@ -19,23 +19,26 @@ export function AuthProvider({ children }) {
     const [sessionChecked, setSessionChecked] = useState(false);
 
     useEffect(() => {
-        // If no user in localStorage, we consider session checked immediately
-        if (!user) {
-            setSessionChecked(true);
-            return;
-        }
-
         const verifySession = async () => {
-            console.log("AuthCheck: Verifying session...");
+            // No saved user in localStorage? Mark session as checked immediately.
+            if (!localStorage.getItem('user')) {
+                setSessionChecked(true);
+                return;
+            }
+
+            console.log("AuthCheck: Verifying background session...");
             try {
+                // If this fails (401), our interceptor will handle user state clearing,
+                // but we also explicitly check here as a fallback.
                 const res = await api.get('/auth/me');
-                console.log("AuthCheck: Session valid", res.data);
+                if (res.data?.data?.user) {
+                    const freshUser = res.data.data.user;
+                    setUser(freshUser);
+                    localStorage.setItem('user', JSON.stringify(freshUser));
+                }
             } catch (err) {
-                console.error("AuthCheck: Session invalid or API unreachable", {
-                    status: err.response?.status,
-                    message: err.message
-                });
-                // Cookie is invalid/expired — silently clear stale localStorage
+                console.error("AuthCheck: Stale or invalid session session.", err.message);
+                // Clear user if we get a definitive 401
                 if (err.response?.status === 401) {
                     setUser(null);
                     localStorage.removeItem('user');
@@ -44,10 +47,9 @@ export function AuthProvider({ children }) {
                 setSessionChecked(true);
             }
         };
-        // Small delay so the UI renders first, then we verify in the background
-        const timer = setTimeout(verifySession, 500);
-        return () => clearTimeout(timer);
-    }, []); // run once on mount only
+
+        verifySession();
+    }, []); // Only on mount
 
     const login = async (email, password) => {
         setLoading(true);
