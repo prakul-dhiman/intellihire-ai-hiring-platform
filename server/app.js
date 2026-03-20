@@ -44,15 +44,33 @@ app.use(mongoSanitize());
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
-  'http://localhost:3000'
+  'http://localhost:3000',
 ].filter(Boolean);
+
+// Check if an origin is from a private LAN (e.g. 192.168.x.x:5173 on mobile)
+const isPrivateNetwork = (origin) => {
+  if (!origin) return false;
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      /^192\.168\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+    );
+  } catch {
+    return false;
+  }
+};
 
 const corsOptions = {
     origin: (origin, callback) => {
-      const isAllowed = !origin || 
-                       allowedOrigins.includes(origin) || 
-                       (NODE_ENV === 'development') ||
-                       origin.endsWith('.vercel.app');
+      const isAllowed =
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (NODE_ENV === 'development' && isPrivateNetwork(origin)) ||
+        origin.endsWith('.vercel.app');
       callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
     },
     credentials: true,
@@ -61,6 +79,7 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+
 app.use(generalLimiter);
 
 // ─── Health Check ────────────────────────────────────────────────
