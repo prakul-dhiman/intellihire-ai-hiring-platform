@@ -65,7 +65,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://intellihire-ai.vercel.app' 
+  'https://intellihire-ai.vercel.app',
+  'https://intellihire-client-chi.vercel.app'
 ].filter(Boolean);
 
 const corsOptions = {
