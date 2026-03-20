@@ -36,7 +36,9 @@ const register = async (req, res) => {
 
     res.cookie("token", token, getCookieOptions());
 
+    // Also return token in body — frontend stores it for cross-device Bearer auth fallback
     return successResponse(res, 201, "User registered successfully", {
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -70,6 +72,17 @@ const login = async (req, res) => {
 
     res.cookie("token", token, getCookieOptions());
 
+    // Also return token in body — frontend stores it for cross-device Bearer auth fallback
+    const responsePayload = {
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
+
     // Speed Improvement: Don't await the email sending. Let it run in the background.
     sendEmail(
       user.email,
@@ -81,14 +94,7 @@ const login = async (req, res) => {
        <p>Time: ${new Date().toLocaleString()}</p>`
     ).catch(err => console.error("Login alert email failed:", err.message));
 
-    return successResponse(res, 200, "Login successful", {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
+    return successResponse(res, 200, "Login successful", responsePayload);
   } catch (err) {
     return errorResponse(res, 500, err.message || "Login failed");
   }

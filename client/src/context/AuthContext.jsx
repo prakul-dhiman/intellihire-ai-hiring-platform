@@ -1,73 +1,89 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
+// ── Helpers ──────────────────────────────────────────────────────────────
+const saveSession = (userData, token) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    if (token) localStorage.setItem('token', token);
+};
+
+const clearSession = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }) {
-    // Initialize from localStorage — provides instant UI on return visits
     const [user, setUser] = useState(() => {
         try {
             const saved = localStorage.getItem('user');
             return saved ? JSON.parse(saved) : null;
         } catch {
-            localStorage.removeItem('user');
+            clearSession();
             return null;
         }
     });
+
     const [loading, setLoading] = useState(false);
     const [sessionChecked, setSessionChecked] = useState(false);
 
-    // ── Internal helper: verify session via HTTP-only cookie ──────────────
-    const verifySession = useCallback(async () => {
-        try {
-            const res = await api.get('/auth/me');
-            if (res.data?.data?.user) {
-                const freshUser = res.data.data.user;
-                setUser(freshUser);
-                localStorage.setItem('user', JSON.stringify(freshUser));
-                return freshUser;
-            }
-        } catch (err) {
-            // 401 = stale/expired session — clear everything
-            if (err.response?.status === 401) {
-                setUser(null);
-                localStorage.removeItem('user');
-            }
-            // Network errors — keep stale localStorage user (offline tolerance)
-        }
-        return null;
-    }, []);
+    // Prevent mount-time verifySession from running immediately after
+    // a fresh login/register (no need for second round-trip).
+    const justAuthed = useRef(false);
 
-    // ── On mount: verify the cookie against the server ────────────────────
+    // ── Mount: verify returning user's session ────────────────────────
     useEffect(() => {
         const check = async () => {
-            // Only call the network if we have cached user data worth verifying.
-            // If localStorage is empty the user is definitely logged out.
-            if (localStorage.getItem('user')) {
-                await verifySession();
+            // Just logged in/registered — session is already confirmed
+            if (justAuthed.current) {
+                setSessionChecked(true);
+                return;
             }
-            setSessionChecked(true);
-        };
-        check();
-    }, [verifySession]);
 
-    // ── Login ─────────────────────────────────────────────────────────────
+            // No stored user → definitely logged out
+            if (!localStorage.getItem('user')) {
+                setSessionChecked(true);
+                return;
+            }
+
+            // Returning visitor: re-confirm session is still valid on server
+            try {
+                const res = await api.get('/auth/me');
+                const freshUser = res.data?.data?.user;
+                if (freshUser) {
+                    setUser(freshUser);
+                    localStorage.setItem('user', JSON.stringify(freshUser));
+                }
+            } catch (err) {
+                if (err.response?.status === 401) {
+                    setUser(null);
+                    clearSession();
+                }
+                // Network error → keep stale localStorage (offline tolerance)
+            } finally {
+                setSessionChecked(true);
+            }
+        };
+
+        check();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // ── Login ─────────────────────────────────────────────────────────
     const login = async (email, password) => {
         setLoading(true);
         try {
             const res = await api.post('/auth/login', { email, password });
-            const { user: userData } = res.data.data;
+            const { user: userData, token } = res.data.data;
 
-            // Immediately set state from the login response so the UI reacts fast
+            justAuthed.current = true;
             setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
+            saveSession(userData, token);   // saves both user + token
             setSessionChecked(true);
 
-            // CROSS-DEVICE FIX: Do a server confirm so the cookie is proven valid
-            // BEFORE the caller navigates. Without this, ProtectedRoute can see
-            // null user on mobile/LAN devices during the async state update window.
-            const confirmed = await verifySession();
-            return { success: true, user: confirmed || userData };
+            return { success: true, user: userData };
         } catch (err) {
             return { success: false, message: err.response?.data?.message || 'Login failed' };
         } finally {
@@ -75,33 +91,34 @@ export function AuthProvider({ children }) {
         }
     };
 
-    // ── Register ──────────────────────────────────────────────────────────
+    // ── Register ──────────────────────────────────────────────────────
     const register = async (name, email, password, role) => {
         setLoading(true);
         try {
             const res = await api.post('/auth/register', { name, email, password, role });
 
-            if (!res.data?.data?.user) {
-                throw new Error('Invalid response from server');
-            }
+            const { user: userData, token } = res.data?.data || {};
+            if (!userData) throw new Error('Invalid response from server');
 
-            const { user: userData } = res.data.data;
+            justAuthed.current = true;
             setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
+            saveSession(userData, token);   // saves both user + token
             setSessionChecked(true);
 
-            // Same cross-device confirm as login
-            const confirmed = await verifySession();
-            return { success: true, user: confirmed || userData };
+            return { success: true, user: userData };
         } catch (err) {
-            return { success: false, message: err.response?.data?.message || err.message || 'Registration failed' };
+            return {
+                success: false,
+                message: err.response?.data?.message || err.message || 'Registration failed',
+            };
         } finally {
             setLoading(false);
         }
     };
 
-    // ── Logout ────────────────────────────────────────────────────────────
+    // ── Logout ────────────────────────────────────────────────────────
     const logout = async () => {
+        justAuthed.current = false;
         try {
             await api.post('/auth/logout');
         } catch (err) {
@@ -109,8 +126,7 @@ export function AuthProvider({ children }) {
         }
         setUser(null);
         setSessionChecked(true);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        clearSession();
     };
 
     const value = {
