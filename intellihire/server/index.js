@@ -37,11 +37,19 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        // Reflect origin in dev, otherwise use FRONTEND_URL
+        if (NODE_ENV === 'development' || !origin) return callback(null, true);
+        const allowed = [process.env.FRONTEND_URL, 'http://localhost:5173'].filter(Boolean);
+        if (allowed.includes(origin)) return callback(null, true);
+        callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST']
   },
 });
+
+
 
 app.set('socketio', io); // Important to expose io to controllers
 
@@ -57,16 +65,22 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://intellihire-ai.vercel.app' // Adding a placeholder or specific user domain if known, but FRONTEND_URL covers it
+  'https://intellihire-ai.vercel.app' 
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || NODE_ENV === 'development') {
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                     (NODE_ENV === 'development') ||
+                     origin.endsWith('.vercel.app'); // Allow all Vercel previews
+
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.warn(`CORS Rejected for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },

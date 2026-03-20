@@ -17,10 +17,23 @@ api.interceptors.request.use((config) => {
 
 // Handle 401 responses globally
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // BUG-FIX: Detect if the API returned HTML (common when proxy/rewrites fail in production)
+        if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+            console.error("AXIOS_PROD_ERROR: Received HTML instead of JSON. Check your API URL and Vercel rewrites.");
+            return Promise.reject(new Error("Invalid JSON response from API (received HTML)"));
+        }
+        return response;
+    },
     (error) => {
         const status = error.response?.status;
         const currentPath = window.location.pathname;
+
+        console.error("AXIOS_ERROR:", {
+            url: error.config?.url,
+            status: status,
+            msg: error.message
+        });
 
         if (status === 401) {
             // Avoid looping redirects if already on auth pages
@@ -31,6 +44,7 @@ api.interceptors.response.use(
                                  error.config.url.includes('/auth/me');
 
             if (!isAuthPage && !isAuthRequest) {
+                console.warn("AXIOS_401: Redirecting to login...");
                 // Clear state
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');

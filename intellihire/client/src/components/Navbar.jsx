@@ -40,9 +40,11 @@ export default function Navbar() {
         fetchUnread();
 
         // Connect socket for real-time ping
-        const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+        // USES window.location.origin to support local network access via proxy if in dev
+        const socket = io(import.meta.env.DEV ? window.location.origin : (import.meta.env.VITE_API_URL || 'http://localhost:5000'), {
             withCredentials: true
         });
+
 
         socket.on('connect', () => {
             socket.emit('join-chat', user.id);
