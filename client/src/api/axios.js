@@ -1,9 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // Always use a relative /api path so Vite proxy handles it in dev,
-    // and the production env variable handles it in prod.
-    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_BASE_URL || '/api'),
+    // /api works in both environments:
+    //   Dev: Vite proxy forwards /api → localhost:5000
+    //   Prod: Vercel rewrite forwards /api → Render backend
+    // This keeps cookies same-origin and avoids all CORS/SameSite issues.
+    baseURL: '/api',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
