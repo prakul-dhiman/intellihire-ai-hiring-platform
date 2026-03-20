@@ -26,9 +26,15 @@ export function AuthProvider({ children }) {
         }
 
         const verifySession = async () => {
+            console.log("AuthCheck: Verifying session...");
             try {
-                await api.get('/auth/me');
+                const res = await api.get('/auth/me');
+                console.log("AuthCheck: Session valid", res.data);
             } catch (err) {
+                console.error("AuthCheck: Session invalid or API unreachable", {
+                    status: err.response?.status,
+                    message: err.message
+                });
                 // Cookie is invalid/expired — silently clear stale localStorage
                 if (err.response?.status === 401) {
                     setUser(null);
