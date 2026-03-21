@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://intellihire-server-7u68.onrender.com/api/$1"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://intellihire-server-7u68.onrender.com/socket.io/$1"
     }
   ],
   "headers": [

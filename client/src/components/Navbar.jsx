@@ -33,24 +33,33 @@ export default function Navbar() {
         const fetchUnread = async () => {
             try {
                 const res = await api.get('/messages/unread-count');
-                setUnreadCount(res.data.data.count);
-            } catch (err) { console.error("Unread fetch fail"); }
+                setUnreadCount(res.data?.data?.count ?? 0);
+            } catch (err) {
+                // 401 = token not yet accepted by server (cold start / race).
+                // Any other error = silently skip, badge stays at 0.
+                if (err.response?.status !== 401) {
+                    console.error('Unread fetch fail', err.response?.status);
+                }
+            }
         };
 
         fetchUnread();
 
-        // Connect socket for real-time ping
-        // USES window.location.origin to support local network access via proxy if in dev
-        const socket = io(import.meta.env.DEV ? window.location.origin : (import.meta.env.VITE_API_URL || 'http://localhost:5000'), {
-            withCredentials: true
+        // Always connect through window.location.origin so that:
+        //   Dev  → Vite proxy forwards /socket.io → localhost:5000
+        //   Prod → Vercel /socket.io rewrite → Render (keeps auth headers intact)
+        // Never connect directly to the Render URL — that bypasses the proxy and
+        // loses the Authorization header on cross-origin requests.
+        const socket = io(window.location.origin, {
+            withCredentials: true,
+            path: '/socket.io',
         });
-
 
         socket.on('connect', () => {
             socket.emit('join-chat', user.id);
         });
 
-        socket.on('new-message', (msg) => {
+        socket.on('new-message', () => {
             // Only increment if not on messages page (where they are likely reading it)
             if (!window.location.pathname.includes('messages')) {
                 setUnreadCount(prev => prev + 1);
