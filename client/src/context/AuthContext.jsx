@@ -5,10 +5,8 @@ const AuthContext = createContext(null);
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 const saveSession = (userData, token) => {
+    console.log('[AuthContext] saving session', { userId: userData?.id, hasToken: !!token });
     localStorage.setItem('user', JSON.stringify(userData));
-    // Always persist the token from the response body — this is the
-    // Bearer-token fallback that works when cookies are stripped by the
-    // Vercel edge proxy in cross-origin rewrites (production).
     if (token) localStorage.setItem('token', token);
 };
 
@@ -40,32 +38,31 @@ export function AuthProvider({ children }) {
     // ── Mount: verify returning user's session ────────────────────────
     useEffect(() => {
         const check = async () => {
-            // Just logged in/registered — session is already confirmed
+            console.log('[AuthContext] mount: checking session...', { justAuthed: justAuthed.current, hasStoredUser: !!localStorage.getItem('user') });
             if (justAuthed.current) {
                 setSessionChecked(true);
                 return;
             }
 
-            // No stored user → definitely logged out
             if (!localStorage.getItem('user')) {
                 setSessionChecked(true);
                 return;
             }
 
-            // Returning visitor: re-confirm session is still valid on server
             try {
                 const res = await api.get('/auth/me');
+                console.log('[AuthContext] mount: session valid', res.data?.data?.user?.email);
                 const freshUser = res.data?.data?.user;
                 if (freshUser) {
                     setUser(freshUser);
                     localStorage.setItem('user', JSON.stringify(freshUser));
                 }
             } catch (err) {
+                console.warn('[AuthContext] mount: session invalid/failed', err.response?.status);
                 if (err.response?.status === 401) {
                     setUser(null);
                     clearSession();
                 }
-                // Network error → keep stale localStorage (offline tolerance)
             } finally {
                 setSessionChecked(true);
             }
@@ -145,7 +142,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user || !!localStorage.getItem('user'),
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
