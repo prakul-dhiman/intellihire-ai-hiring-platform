@@ -48,13 +48,22 @@ export default function Register() {
         try {
             const data = await register(form.name, form.email, form.password, form.role);
             if (data.success && data.user) {
-                const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
+                const navPath = data.user.role === 'admin'
+                    ? '/admin/dashboard'
+                    : data.user.role === 'recruiter'
+                    ? '/recruiter/dashboard'
+                    : '/candidate/dashboard';
                 navigate(navPath, { replace: true });
             } else {
-                setError(data.message || 'Registration failed - no user data returned');
+                // Show the actual server error message
+                const msg = data.message || 'Registration failed — no user data returned';
+                console.error('[Register] Server rejected registration:', msg);
+                setError(msg);
             }
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Registration failed');
+            const msg = err.response?.data?.message || err.message || 'Registration failed';
+            console.error('[Register] Unexpected error:', msg, err);
+            setError(msg);
         } finally {
             setLoading(false);
         }

@@ -6,6 +6,9 @@ const AuthContext = createContext(null);
 // ── Helpers ──────────────────────────────────────────────────────────────
 const saveSession = (userData, token) => {
     localStorage.setItem('user', JSON.stringify(userData));
+    // Always persist the token from the response body — this is the
+    // Bearer-token fallback that works when cookies are stripped by the
+    // Vercel edge proxy in cross-origin rewrites (production).
     if (token) localStorage.setItem('token', token);
 };
 
@@ -78,9 +81,11 @@ export function AuthProvider({ children }) {
             const res = await api.post('/auth/login', { email, password });
             const { user: userData, token } = res.data.data;
 
+            // CRITICAL: persist session BEFORE updating React state so the
+            // route guard reads localStorage correctly during the re-render.
             justAuthed.current = true;
-            setUser(userData);
-            saveSession(userData, token);   // saves both user + token
+            saveSession(userData, token);   // persist token + user first
+            setUser(userData);              // then trigger re-render
             setSessionChecked(true);
 
             return { success: true, user: userData };
@@ -100,9 +105,13 @@ export function AuthProvider({ children }) {
             const { user: userData, token } = res.data?.data || {};
             if (!userData) throw new Error('Invalid response from server');
 
+            // CRITICAL: Set justAuthed BEFORE setUser so the mount-effect
+            // guard fires correctly if the component re-mounts during navigation.
+            // Also persist session BEFORE updating React state so the route
+            // guard reads localStorage correctly during the re-render.
             justAuthed.current = true;
-            setUser(userData);
-            saveSession(userData, token);   // saves both user + token
+            saveSession(userData, token);   // persist token + user first
+            setUser(userData);              // then trigger re-render
             setSessionChecked(true);
 
             return { success: true, user: userData };

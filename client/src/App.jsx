@@ -6,6 +6,19 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import ChatbotWidget from './components/ChatbotWidget';
 
+/**
+ * Read the effective user: React context first, then localStorage fallback.
+ * This covers the ~1 render-cycle gap right after login/register where
+ * setUser() hasn't been committed yet but localStorage is already written.
+ */
+function getEffectiveUser(ctxUser) {
+    if (ctxUser) return ctxUser;
+    try {
+        const raw = localStorage.getItem('user');
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+}
+
 // Public Pages
 const Landing = React.lazy(() => import('./pages/Landing'));
 const Login = React.lazy(() => import('./pages/Login'));
@@ -66,6 +79,9 @@ import MainLayout from './components/MainLayout';
 
 export default function App() {
   const { isAuthenticated, user, sessionChecked } = useAuth();
+  // Effective auth accounts for the post-login state transition
+  const effectiveUser = getEffectiveUser(user);
+  const isAuth = isAuthenticated || !!effectiveUser;
 
   if (!sessionChecked) {
     return (
@@ -100,8 +116,8 @@ export default function App() {
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/gdpr" element={<GDPRPage />} />
 
-            <Route path="/login" element={isAuthenticated ? <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Login />} />
-            <Route path="/register" element={isAuthenticated ? <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Register />} />
+            <Route path="/login" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Login />} />
+            <Route path="/register" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
 
@@ -135,7 +151,7 @@ export default function App() {
             <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
 
             {/* Catch-all: Redirect to dashboard if logged in, otherwise landing */}
-            <Route path="*" element={isAuthenticated ? <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Navigate to="/" replace />} />
+            <Route path="*" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Navigate to="/" replace />} />
           </Routes>
         </Suspense>
     </MainLayout>
