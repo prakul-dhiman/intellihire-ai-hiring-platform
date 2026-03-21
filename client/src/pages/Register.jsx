@@ -89,7 +89,7 @@ export default function Register() {
                         <form onSubmit={handleSubmit}>
                             {/* Role */}
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>I am a</label>
+                                <div style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }} role="group" aria-label="Account type">I am a</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     {[{ value: 'candidate', emoji: '👤', label: 'Candidate' }, { value: 'recruiter', emoji: '🏢', label: 'Recruiter' }].map(({ value, emoji, label }) => (
                                         <button key={value} type="button" onClick={() => setForm({ ...form, role: value })}
@@ -106,7 +106,7 @@ export default function Register() {
                             </div>
                             {/* Name */}
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Full Name</label>
+                                <label htmlFor="register-name" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Full Name</label>
                                 <div style={{ position: 'relative' }}>
                                     <HiOutlineUser size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                                     <input id="register-name" type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="input-field" style={{ paddingLeft: '42px' }} placeholder="John Doe" required />
@@ -114,7 +114,7 @@ export default function Register() {
                             </div>
                             {/* Email */}
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Email</label>
+                                <label htmlFor="register-email" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Email</label>
                                 <div style={{ position: 'relative' }}>
                                     <HiOutlineMail size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                                     <input id="register-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" style={{ paddingLeft: '42px' }} placeholder="you@example.com" required />
@@ -123,7 +123,7 @@ export default function Register() {
                             {/* Password */}
                             <div style={{ marginBottom: '24px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                    <label style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>Password</label>
+                                    <label htmlFor="register-password" style={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>Password</label>
                                     {form.password && (
                                         <span style={{ fontSize: '12px', fontWeight: 600, color: currentStrength?.color }}>
                                             {currentStrength?.label}
