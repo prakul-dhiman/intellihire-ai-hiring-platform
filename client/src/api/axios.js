@@ -56,11 +56,17 @@ api.interceptors.response.use(
                 error.config?.url?.includes('/auth/register') ||
                 error.config?.url?.includes('/auth/me');
 
-            if (!isAuthPage && !isAuthRequest) {
-                console.warn('AXIOS_401: Session expired. Redirecting to login...');
+            // Non-critical background requests shouldn't kill the session on a random 401
+            const isNonCriticalRequest = 
+                error.config?.url?.includes('/unread-count') ||
+                error.config?.url?.includes('/notifications');
+
+            if (!isAuthPage && !isAuthRequest && !isNonCriticalRequest) {
+                console.warn('AXIOS_401: Critical session failure. Redirecting to login...', error.config?.url);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
-                window.location.href = '/login?expired=1';
+                // Use replace to avoid back-button loops
+                window.location.replace('/login?expired=1');
             }
         }
 
