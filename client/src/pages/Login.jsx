@@ -21,12 +21,21 @@ export default function Login() {
         try {
             const data = await login(form.email, form.password);
             if (data.success) {
-                const navPath = data.user.role === 'admin' ? '/admin/dashboard' : data.user.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard';
+                const navPath = data.user.role === 'admin'
+                    ? '/admin/dashboard'
+                    : data.user.role === 'recruiter'
+                    ? '/recruiter/dashboard'
+                    : '/candidate/dashboard';
                 navigate(navPath, { replace: true });
+            } else {
+                const msg = data.message || 'Login failed';
+                console.error('[Login] Server rejected login:', msg);
+                setError(msg);
             }
-            else setError(data.message || 'Login failed');
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
+            const msg = err.response?.data?.message || err.message || 'Login failed';
+            console.error('[Login] Unexpected error:', msg, err);
+            setError(msg);
         } finally {
             setLoading(false);
         }
