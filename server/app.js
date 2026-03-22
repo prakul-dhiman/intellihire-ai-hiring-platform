@@ -18,6 +18,7 @@ const feedbackRoutes = require('./routes/feedbackRoutes.js');
 const analyticsRoutes = require('./routes/analyticsRoutes.js');
 
 const app = express();
+app.set('trust proxy', 1);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ─── Middleware Setup ───────────────────────────────────────────
