@@ -67,11 +67,15 @@ const isPrivateNetwork = (origin) => {
 
 const corsOptions = {
     origin: (origin, callback) => {
+      console.log(`[CORS] Request from origin: ${origin}`);
       const isAllowed =
         !origin ||
         allowedOrigins.includes(origin) ||
-        (NODE_ENV === 'development' && isPrivateNetwork(origin)) ||
-        origin.endsWith('.vercel.app');
+        (NODE_ENV === 'development' && isPrivateNetwork(origin));
+      
+      if (!isAllowed) {
+        console.warn(`[CORS] Blocked request from origin: ${origin}`);
+      }
       callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
     },
     credentials: true,

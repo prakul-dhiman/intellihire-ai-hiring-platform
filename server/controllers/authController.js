@@ -5,13 +5,18 @@ const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 
 // Cookie configuration
-const getCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 30 * 24 * 60 * 60 * 1000,
-  path: '/', // SECURE FIX: Explicitly set path to ensure cookies are sent for all API subpaths
-});
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  const options = {
+    httpOnly: true,
+    secure: isProd || true, // Force true for cross-origin Render deployments
+    sameSite: 'None', // MUST be None for cross-origin cookies to work
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: '/', // SECURE FIX: Explicitly set path to ensure cookies are sent for all API subpaths
+  };
+  console.log('[Auth] Generated cookie options:', options);
+  return options;
+};
 
 
 /**
@@ -33,8 +38,10 @@ const register = async (req, res) => {
     const user = await User.create({ name, email, password, role });
 
     const token = generateToken(user);
+    console.log('[Auth] Generated token for registered user. Setting cookie...');
 
     res.cookie("token", token, getCookieOptions());
+    console.log('[Auth] Set-Cookie header should now be present in response.');
 
     // Also return token in body — frontend stores it for cross-device Bearer auth fallback
     return successResponse(res, 201, "User registered successfully", {
@@ -69,8 +76,10 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user);
+    console.log('[Auth] Generated token for login. Setting cookie...');
 
     res.cookie("token", token, getCookieOptions());
+    console.log('[Auth] Set-Cookie header should now be present in response.');
 
     // Also return token in body — frontend stores it for cross-device Bearer auth fallback
     const responsePayload = {
