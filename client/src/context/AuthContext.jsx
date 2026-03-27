@@ -7,7 +7,12 @@ const AuthContext = createContext(null);
 const saveSession = (userData, token) => {
     console.log('[AuthContext] saving session', { userId: userData?.id, hasToken: !!token });
     localStorage.setItem('user', JSON.stringify(userData));
-    if (token) localStorage.setItem('token', token);
+    if (token) {
+        localStorage.setItem('token', token);
+    } else {
+        // Prevent stale token from older sessions/deploys causing 401 loops.
+        localStorage.removeItem('token');
+    }
 };
 
 const clearSession = () => {

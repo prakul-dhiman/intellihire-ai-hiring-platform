@@ -19,7 +19,12 @@ const api = axios.create({
 // header solves this — the authMiddleware accepts BOTH cookie and Bearer.
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    const url = config.url || '';
+    const isAuthBootstrapRequest =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register');
+
+    if (token && !isAuthBootstrapRequest) {
         if (config.headers && typeof config.headers.set === 'function') {
             config.headers.set('Authorization', `Bearer ${token}`);
         } else {
