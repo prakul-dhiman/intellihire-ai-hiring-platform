@@ -1,17 +1,20 @@
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+
 const api = axios.create({
-    // Use same-origin API path in every environment.
-    // Dev uses Vite proxy; production uses Vercel rewrites.
-    baseURL: '/api',
-    withCredentials: true,
+    baseURL: BASE_URL,
+    withCredentials: false,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// We no longer attach token from localStorage since it's an HTTP-only cookie.
 api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
     return config;
 });
 
