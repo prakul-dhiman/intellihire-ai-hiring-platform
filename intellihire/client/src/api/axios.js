@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // BUG-FIX: In development, always use relative path to utilize Vite proxy.
-    // This prevents cross-origin cookie issues on localhost.
-    baseURL: import.meta.env.DEV ? '/api' : (import.meta.env.VITE_API_BASE_URL || '/api'),
+    // Use same-origin API path in every environment.
+    // Dev uses Vite proxy; production uses Vercel rewrites.
+    baseURL: '/api',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
