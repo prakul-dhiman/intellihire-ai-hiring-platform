@@ -60,8 +60,9 @@ export default function Messages() {
     // Connect socket
     useEffect(() => {
         if (!user) return;
-        const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
-            withCredentials: true
+        const newSocket = io(window.location.origin, {
+            withCredentials: true,
+            path: '/socket.io',
         });
         setSocket(newSocket);
 
