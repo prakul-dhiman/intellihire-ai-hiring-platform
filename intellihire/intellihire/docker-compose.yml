@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # ─── FRONTEND LAYER ────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - intellihire-net
+
+  # ─── BACKEND API LAYER ─────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI:-mongodb://mongo:27017/intellihire}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_here}
+      - NODE_ENV=production
+    depends_on:
+      - mongo
+      - redis
+    networks:
+      - intellihire-net
+
+  # ─── DATABASE LAYER ────────────────────
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - intellihire-net
+
+  # ─── IN-MEMORY CACHE LAYER (SOCKET/SESSIONS) ───
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - intellihire-net
+
+volumes:
+  mongo_data:
+
+networks:
+  intellihire-net:
+    driver: bridge

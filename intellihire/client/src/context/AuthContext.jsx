@@ -1,62 +1,95 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
+// ── Helpers ──────────────────────────────────────────────────────────────
+const saveSession = (userData, token) => {
+    console.log('[AuthContext] saving session', { userId: userData?.id, hasToken: !!token });
+    localStorage.setItem('user', JSON.stringify(userData));
+    if (token) {
+        localStorage.setItem('token', token);
+    } else {
+        // Prevent stale token from older sessions/deploys causing 401 loops.
+        localStorage.removeItem('token');
+    }
+};
+
+const clearSession = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }) {
-    // SEC-07 FIX: guard JSON.parse against corrupted localStorage
     const [user, setUser] = useState(() => {
         try {
             const saved = localStorage.getItem('user');
             return saved ? JSON.parse(saved) : null;
         } catch {
-            localStorage.removeItem('user');
+            clearSession();
             return null;
         }
     });
-    const [loading, setLoading] = useState(false);
 
+    const [loading, setLoading] = useState(false);
     const [sessionChecked, setSessionChecked] = useState(false);
 
-    useEffect(() => {
-        // If no user in localStorage, we consider session checked immediately
-        if (!user) {
-            setSessionChecked(true);
-            return;
-        }
+    // Prevent mount-time verifySession from running immediately after
+    // a fresh login/register (no need for second round-trip).
+    const justAuthed = useRef(false);
 
-        const verifySession = async () => {
-            console.log("AuthCheck: Verifying session...");
+    // ── Mount: verify returning user's session ────────────────────────
+    useEffect(() => {
+        const check = async () => {
+            console.log('[AuthContext] mount: checking session...', { justAuthed: justAuthed.current, hasStoredUser: !!localStorage.getItem('user') });
+            if (justAuthed.current) {
+                setSessionChecked(true);
+                return;
+            }
+
+            if (!localStorage.getItem('user')) {
+                setSessionChecked(true);
+                return;
+            }
+
             try {
                 const res = await api.get('/auth/me');
-                console.log("AuthCheck: Session valid", res.data);
+                console.log('[AuthContext] mount: session valid', res.data?.data?.user?.email);
+                const freshUser = res.data?.data?.user;
+                if (freshUser) {
+                    setUser(freshUser);
+                    localStorage.setItem('user', JSON.stringify(freshUser));
+                }
             } catch (err) {
-                console.error("AuthCheck: Session invalid or API unreachable", {
-                    status: err.response?.status,
-                    message: err.message
-                });
-                // Cookie is invalid/expired — silently clear stale localStorage
+                console.warn('[AuthContext] mount: session invalid/failed', err.response?.status);
                 if (err.response?.status === 401) {
                     setUser(null);
-                    localStorage.removeItem('user');
+                    clearSession();
                 }
             } finally {
                 setSessionChecked(true);
             }
         };
-        // Small delay so the UI renders first, then we verify in the background
-        const timer = setTimeout(verifySession, 500);
-        return () => clearTimeout(timer);
-    }, []); // run once on mount only
 
+        check();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // ── Login ─────────────────────────────────────────────────────────
     const login = async (email, password) => {
         setLoading(true);
         try {
             const res = await api.post('/auth/login', { email, password });
-            const { user: userData } = res.data.data;
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-            setSessionChecked(true); // Ensure session is marked as checked
+            const { user: userData, token } = res.data.data;
+
+            // CRITICAL: persist session BEFORE updating React state so the
+            // route guard reads localStorage correctly during the re-render.
+            justAuthed.current = true;
+            saveSession(userData, token);   // persist token + user first
+            setUser(userData);              // then trigger re-render
+            setSessionChecked(true);
+
             return { success: true, user: userData };
         } catch (err) {
             return { success: false, message: err.response?.data?.message || 'Login failed' };
@@ -65,39 +98,57 @@ export function AuthProvider({ children }) {
         }
     };
 
+    // ── Register ──────────────────────────────────────────────────────
     const register = async (name, email, password, role) => {
         setLoading(true);
         try {
             const res = await api.post('/auth/register', { name, email, password, role });
-            
-            if (!res.data || !res.data.data || !res.data.data.user) {
-                throw new Error('Invalid response from server');
-            }
 
-            const { user: userData } = res.data.data;
-            setUser(userData);
-            localStorage.setItem('user', JSON.stringify(userData));
-            setSessionChecked(true); // Ensure session is marked as checked
+            const { user: userData, token } = res.data?.data || {};
+            if (!userData) throw new Error('Invalid response from server');
+
+            // CRITICAL: Set justAuthed BEFORE setUser so the mount-effect
+            // guard fires correctly if the component re-mounts during navigation.
+            // Also persist session BEFORE updating React state so the route
+            // guard reads localStorage correctly during the re-render.
+            justAuthed.current = true;
+            saveSession(userData, token);   // persist token + user first
+            setUser(userData);              // then trigger re-render
+            setSessionChecked(true);
+
             return { success: true, user: userData };
         } catch (err) {
-            return { success: false, message: err.response?.data?.message || err.message || 'Registration failed' };
+            return {
+                success: false,
+                message: err.response?.data?.message || err.message || 'Registration failed',
+            };
         } finally {
             setLoading(false);
         }
     };
 
+    // ── Logout ────────────────────────────────────────────────────────
     const logout = async () => {
+        justAuthed.current = false;
         try {
             await api.post('/auth/logout');
         } catch (err) {
             console.error('Logout error', err);
         }
         setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token'); // cleanup old code
+        setSessionChecked(true);
+        clearSession();
     };
 
-    const value = { user, loading, sessionChecked, login, register, logout, isAuthenticated: !!user };
+    const value = {
+        user,
+        loading,
+        sessionChecked,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user || !!localStorage.getItem('user'),
+    };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

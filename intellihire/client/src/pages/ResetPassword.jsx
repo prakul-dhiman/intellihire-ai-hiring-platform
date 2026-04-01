@@ -70,10 +70,10 @@ export default function ResetPassword() {
 
                         <form onSubmit={handleSubmit}>
                             <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>New Password</label>
+                                <label htmlFor="reset-password" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>New Password</label>
                                 <div style={{ position: 'relative' }}>
                                     <HiOutlineLockClosed size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
+                                    <input id="reset-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
                                         onFocus={() => setPasswordFocused(true)} onBlur={() => setPasswordFocused(false)}
                                         className="input-field" style={{ paddingLeft: '42px', paddingRight: '42px' }} placeholder="Min 8 characters" required />
                                     <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -97,10 +97,10 @@ export default function ResetPassword() {
                             </div>
 
                             <div style={{ marginBottom: '24px' }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Confirm Password</label>
+                                <label htmlFor="reset-confirm-password" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Confirm Password</label>
                                 <div style={{ position: 'relative' }}>
                                     <HiOutlineLockClosed size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                                    <input id="reset-confirm-password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                                         className="input-field" style={{ paddingLeft: '42px' }} placeholder="Repeat password" required />
                                 </div>
                             </div>

@@ -5,13 +5,18 @@ const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 
 // Cookie configuration
-const getCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 30 * 24 * 60 * 60 * 1000,
-  path: '/', // SECURE FIX: Explicitly set path to ensure cookies are sent for all API subpaths
-});
+const getCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  const options = {
+    httpOnly: true,
+    secure: isProd || true, // Force true for cross-origin Render deployments
+    sameSite: 'None', // MUST be None for cross-origin cookies to work
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: '/', // SECURE FIX: Explicitly set path to ensure cookies are sent for all API subpaths
+  };
+  console.log('[Auth] Generated cookie options:', options);
+  return options;
+};
 
 
 /**
@@ -33,10 +38,14 @@ const register = async (req, res) => {
     const user = await User.create({ name, email, password, role });
 
     const token = generateToken(user);
+    console.log('[Auth] Generated token for registered user. Setting cookie...');
 
     res.cookie("token", token, getCookieOptions());
+    console.log('[Auth] Set-Cookie header should now be present in response.');
 
+    // Also return token in body — frontend stores it for cross-device Bearer auth fallback
     return successResponse(res, 201, "User registered successfully", {
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -67,8 +76,21 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user);
+    console.log('[Auth] Generated token for login. Setting cookie...');
 
     res.cookie("token", token, getCookieOptions());
+    console.log('[Auth] Set-Cookie header should now be present in response.');
+
+    // Also return token in body — frontend stores it for cross-device Bearer auth fallback
+    const responsePayload = {
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
 
     // Speed Improvement: Don't await the email sending. Let it run in the background.
     sendEmail(
@@ -81,14 +103,7 @@ const login = async (req, res) => {
        <p>Time: ${new Date().toLocaleString()}</p>`
     ).catch(err => console.error("Login alert email failed:", err.message));
 
-    return successResponse(res, 200, "Login successful", {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
+    return successResponse(res, 200, "Login successful", responsePayload);
   } catch (err) {
     return errorResponse(res, 500, err.message || "Login failed");
   }

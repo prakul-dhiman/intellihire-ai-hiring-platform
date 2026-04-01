@@ -8,22 +8,42 @@ const ROLE_DASHBOARDS = {
     candidate: '/candidate/dashboard',
 };
 
+/**
+ * Reads user from React context first; falls back to localStorage
+ * for the brief render cycle AFTER login/register where React state
+ * (setUser) hasn't been committed yet but localStorage is already written.
+ * This prevents the spurious /login redirect that bounces users back to /register.
+ */
+function getEffectiveUser(ctxUser) {
+    if (ctxUser) return ctxUser;
+    try {
+        const raw = localStorage.getItem('user');
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
 export default function ProtectedRoute({ children, role }) {
     const { isAuthenticated, user, sessionChecked } = useAuth();
 
-    // Wait for session verification before making auth decisions (BUG-05 support)
+    // While session check is in flight, render nothing (App.jsx shows spinner)
     if (!sessionChecked) return null;
 
-    if (!isAuthenticated) {
+    // Use context user; fallback to localStorage for post-auth transition
+    const effectiveUser = getEffectiveUser(user);
+    const isAuth = isAuthenticated || !!effectiveUser;
+
+    if (!isAuth) {
         return <Navigate to="/login" replace />;
     }
 
-    // Admins can access everything
-    if (user?.role === 'admin') return children;
+    // Admins can access every protected route
+    if (effectiveUser?.role === 'admin') return children;
 
-    // Role check: if a specific role is required, verify user has it
-    if (role && user?.role !== role) {
-        const fallback = ROLE_DASHBOARDS[user?.role] || '/login';
+    // Role check: redirect to the user's own dashboard if wrong role
+    if (role && effectiveUser?.role !== role) {
+        const fallback = ROLE_DASHBOARDS[effectiveUser?.role] || '/login';
         return <Navigate to={fallback} replace />;
     }
 

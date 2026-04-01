@@ -33,24 +33,33 @@ export default function Navbar() {
         const fetchUnread = async () => {
             try {
                 const res = await api.get('/messages/unread-count');
-                setUnreadCount(res.data.data.count);
-            } catch (err) { console.error("Unread fetch fail"); }
+                setUnreadCount(res.data?.data?.count ?? 0);
+            } catch (err) {
+                // 401 = token not yet accepted by server (cold start / race).
+                // Any other error = silently skip, badge stays at 0.
+                if (err.response?.status !== 401) {
+                    console.error('Unread fetch fail', err.response?.status);
+                }
+            }
         };
 
         fetchUnread();
 
-        // Connect socket for real-time ping
-        // USES window.location.origin to support local network access via proxy if in dev
-        const socket = io(import.meta.env.DEV ? window.location.origin : (import.meta.env.VITE_API_URL || 'http://localhost:5000'), {
-            withCredentials: true
+        // Always connect through window.location.origin so that:
+        //   Dev  → Vite proxy forwards /socket.io → localhost:5000
+        //   Prod → Vercel /socket.io rewrite → Render (keeps auth headers intact)
+        // Never connect directly to the Render URL — that bypasses the proxy and
+        // loses the Authorization header on cross-origin requests.
+        const socket = io(window.location.origin, {
+            withCredentials: true,
+            path: '/socket.io',
         });
-
 
         socket.on('connect', () => {
             socket.emit('join-chat', user.id);
         });
 
-        socket.on('new-message', (msg) => {
+        socket.on('new-message', () => {
             // Only increment if not on messages page (where they are likely reading it)
             if (!window.location.pathname.includes('messages')) {
                 setUnreadCount(prev => prev + 1);
@@ -74,148 +83,102 @@ export default function Navbar() {
 
     return (
         <nav 
-            className={`fixed top-0 left-0 right-0 z-50 h-[64px] flex items-center transition-all duration-300 ${scrolled ? 'bg-[#07090f]/92 border-b border-white/10 backdrop-blur-xl' : 'bg-transparent border-transparent'}`}
+            className={`fixed top-0 left-0 right-0 z-50 h-[64px] flex items-center transition-all duration-500 ${
+                scrolled 
+                    ? 'bg-[#07090f]/80 boreder-b border-white/5 backdrop-blur-2xl shadow-2xl' 
+                    : 'bg-transparent border-transparent'
+            }`}
         >
-            <div className="max-w-[1200px] w-full mx-auto px-10 md:px-12 flex items-center justify-between">
-
+            <div className="max-w-[1400px] w-full mx-auto px-6 md:px-12 flex items-center justify-between">
+                
                 {/* ── Logo ── */}
-                <Link to={isAuthenticated ? dashboardLink : "/"} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', flexShrink: 0 }}>
-                    <LogoSVG size={42} />
-                    <span style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em' }}>
-                        IntelliHire
+                <Link to={isAuthenticated ? dashboardLink : "/"} className="flex items-center gap-3 no-underline group">
+                    <div className="transition-transform duration-500 group-hover:rotate-[360deg]">
+                        <LogoSVG size={38} />
+                    </div>
+                    <span className="text-xl md:text-2xl font-black text-slate-50 tracking-tighter">
+                        Intelli<span className="text-indigo-500">Hire</span>
                     </span>
                 </Link>
 
                 {/* ── Desktop Links ── */}
-                <div className="hidden md:flex items-center gap-2">
-
-                    {/* Candidate-specific nav */}
-                    {isAuthenticated && isCandidate && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginRight: 16 }}>
-                            <NavLink to="/candidate/dashboard">Dashboard</NavLink>
-                            <NavLink to="/candidate/messages" style={{ position: 'relative' }}>
-                                Messages
-                                {unreadCount > 0 && <Badge count={unreadCount} />}
-                            </NavLink>
-                            <NavLink to="/candidate/live-room">
-                                <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                                    background: 'rgba(99,102,241,0.12)',
-                                    border: '1px solid rgba(99,102,241,0.3)',
-                                    borderRadius: 8, padding: '8px 16px',
-                                    color: '#a78bfa', fontWeight: 700, fontSize: 14,
-                                    transition: 'all 0.2s',
-                                }}>
-                                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 6px #22c55e' }} />
-                                    Live Interview
-                                </span>
-                            </NavLink>
-                            <NavLink to="/candidate/code">Practice</NavLink>
-                            <NavLink to="/candidate/resume">Resume</NavLink>
-                            <NavLink to="/candidate/profile">Profile</NavLink>
-                            <NavLink to="/candidate/settings">Settings</NavLink>
+                <div className="hidden md:flex items-center gap-1">
+                    {isAuthenticated ? (
+                        <div className="flex items-center gap-1 mr-4">
+                            {isCandidate && (
+                                <>
+                                    <NavLink to="/candidate/dashboard">Dashboard</NavLink>
+                                    <NavLink to="/candidate/jobs">Jobs</NavLink>
+                                    <NavLink to="/candidate/messages" className="relative">
+                                        Messages
+                                        {unreadCount > 0 && <Badge count={unreadCount} />}
+                                    </NavLink>
+                                    <NavLink to="/candidate/code">IDE</NavLink>
+                                </>
+                            )}
+                            {isRecruiter && (
+                                <>
+                                    <NavLink to="/recruiter/dashboard">Dashboard</NavLink>
+                                    <NavLink to="/recruiter/jobs/create">Post Job</NavLink>
+                                    <NavLink to="/recruiter/messages" className="relative">
+                                        Messages
+                                        {unreadCount > 0 && <Badge count={unreadCount} />}
+                                    </NavLink>
+                                </>
+                            )}
+                            {isAdmin && (
+                                <>
+                                    <NavLink to="/admin/dashboard">Admin</NavLink>
+                                    <NavLink to="/admin/analytics">Insights</NavLink>
+                                </>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1 mr-4 text-sm font-semibold text-slate-400">
+                           <NavLink to="/features">Features</NavLink>
+                           <NavLink to="/about">About</NavLink>
                         </div>
                     )}
 
-                    {/* Admin nav */}
-                    {isAuthenticated && isAdmin && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginRight: 16 }}>
-                            <NavLink to="/admin/dashboard">Dashboard</NavLink>
-                            <NavLink to="/admin/analytics">Analytics</NavLink>
-                            <NavLink to="/admin/leaderboard">Leaderboard</NavLink>
-                            <NavLink to="/recruiter/room">
-                                <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                                    background: 'rgba(99,102,241,0.1)',
-                                    border: '1px solid rgba(99,102,241,0.25)',
-                                    borderRadius: 8, padding: '8px 16px',
-                                    color: '#a78bfa', fontWeight: 700, fontSize: 14,
-                                }}>
-                                    🎙️ Interview Room
-                                </span>
-                            </NavLink>
-                        </div>
-                    )}
-
-                    {/* Recruiter nav */}
-                    {isAuthenticated && isRecruiter && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginRight: 16 }}>
-                            <NavLink to="/recruiter/dashboard">Dashboard</NavLink>
-                            <NavLink to="/recruiter/jobs/create">Post Job</NavLink>
-                            <NavLink to="/recruiter/messages" style={{ position: 'relative' }}>
-                                Messages
-                                {unreadCount > 0 && <Badge count={unreadCount} />}
-                            </NavLink>
-                            <NavLink to="/recruiter/room">🎙️ Room</NavLink>
-                        </div>
-                    )}
-
-                    {/* Public nav (not logged in) */}
-                    {!isAuthenticated && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginRight: 16 }}>
-                            <NavLink to="/features">Features</NavLink>
-                            <NavLink to="/changelog">Changelog</NavLink>
-                            <NavLink to="/roadmap">Roadmap</NavLink>
-                            <NavLink to="/about">About</NavLink>
-                        </div>
-                    )}
-
-                    {/* Auth buttons */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingLeft: 16, borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
+                    {/* Auth Section */}
+                    <div className="flex items-center gap-4 pl-6 border-l border-white/10">
                         {isAuthenticated ? (
-                            <button
-                                onClick={logout}
-                                style={{
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    color: '#94a3b8', padding: '8px 20px',
-                                    borderRadius: 9, fontSize: 14, fontWeight: 600,
-                                    cursor: 'pointer', transition: 'all 0.2s',
-                                    whiteSpace: 'nowrap',
-                                }}
-                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#f87171'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-                            >
-                                Logout
-                            </button>
-                        ) : (
-                            <>
-                                <Link to="/login" style={{
-                                    fontSize: 13, fontWeight: 600, color: '#94a3b8',
-                                    textDecoration: 'none', padding: '8px 16px',
-                                    borderRadius: 9, transition: 'color 0.2s',
-                                }}
-                                    onMouseEnter={e => e.currentTarget.style.color = '#f1f5f9'}
-                                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                            <div className="flex items-center gap-3">
+                                <Link 
+                                    to={isCandidate ? "/candidate/profile" : "/recruiter/dashboard"}
+                                    className="h-8 w-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs"
                                 >
-                                    Sign In
+                                    {user?.name?.charAt(0).toUpperCase()}
+                                </Link>
+                                <button
+                                    onClick={logout}
+                                    className="text-xs font-bold text-slate-500 hover:text-red-400 transition-colors uppercase tracking-widest"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-4">
+                                <Link to="/login" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">
+                                    Login
                                 </Link>
                                 <Link
                                     to="/register"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                        color: '#fff', padding: '9px 20px',
-                                        borderRadius: 9, fontSize: 13, fontWeight: 700,
-                                        textDecoration: 'none', transition: 'opacity .2s',
-                                        boxShadow: '0 0 20px rgba(99,102,241,0.3)',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95"
                                 >
-                                    Get Started →
+                                    Join Platform
                                 </Link>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* ── Mobile Toggle ── */}
                 <button
-                    className="flex md:hidden bg-transparent border-none text-[#f1f5f9] p-1.5 cursor-pointer"
+                    className="flex md:hidden bg-white/5 border border-white/10 text-slate-100 p-2 rounded-lg cursor-pointer active:scale-90 transition-transform"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 >
-                    {mobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+                    {mobileMenuOpen ? <HiX size={20} /> : <HiMenu size={20} />}
                 </button>
             </div>
 
@@ -223,100 +186,77 @@ export default function Navbar() {
             <AnimatePresence>
                 {mobileMenuOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        style={{
-                            position: 'absolute', top: 64, left: 0, right: 0,
-                            background: 'rgba(7,9,15,0.98)',
-                            borderBottom: '1px solid rgba(255,255,255,0.07)',
-                            backdropFilter: 'blur(20px)',
-                            padding: '16px 24px 24px',
-                            display: 'flex', flexDirection: 'column', gap: 4,
-                        }}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="absolute top-[64px] left-0 right-0 bg-[#07090f]/95 backdrop-blur-3xl border-b border-white/5 overflow-hidden shadow-2xl"
                     >
-                        {isAuthenticated && isCandidate && (
-                            <>
-                                <MobileLink to="/candidate/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileLink>
-                                <MobileLink to="/candidate/messages" onClick={() => setMobileMenuOpen(false)}>
-                                    Messages {unreadCount > 0 && <span style={{ color: '#f87171', marginLeft: 8 }}>({unreadCount})</span>}
-                                </MobileLink>
-                                <MobileLink to="/candidate/interview" onClick={() => setMobileMenuOpen(false)}>🟢 Live Interview</MobileLink>
-                                <MobileLink to="/candidate/code" onClick={() => setMobileMenuOpen(false)}>Practice</MobileLink>
-                                <MobileLink to="/candidate/resume" onClick={() => setMobileMenuOpen(false)}>Resume</MobileLink>
-                                <MobileLink to="/candidate/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileLink>
-                                <MobileLink to="/candidate/settings" onClick={() => setMobileMenuOpen(false)}>Settings</MobileLink>
-                            </>
-                        )}
-                        {isAuthenticated && isAdmin && (
-                            <>
-                                <MobileLink to="/admin/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileLink>
-                                <MobileLink to="/admin/analytics" onClick={() => setMobileMenuOpen(false)}>Analytics</MobileLink>
-                            </>
-                        )}
-                        {isAuthenticated && isRecruiter && (
-                            <>
-                                <MobileLink to="/recruiter/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileLink>
-                                <MobileLink to="/recruiter/jobs/create" onClick={() => setMobileMenuOpen(false)}>Post Job</MobileLink>
-                                <MobileLink to="/recruiter/messages" onClick={() => setMobileMenuOpen(false)}>
-                                    Messages {unreadCount > 0 && <span style={{ color: '#f87171', marginLeft: 8 }}>({unreadCount})</span>}
-                                </MobileLink>
-                                <MobileLink to="/recruiter/room" onClick={() => setMobileMenuOpen(false)}>Interview Room</MobileLink>
-                            </>
-                        )}
-                        {!isAuthenticated && (
-                            <>
-                                <MobileLink to="/features" onClick={() => setMobileMenuOpen(false)}>Features</MobileLink>
-                                <MobileLink to="/changelog" onClick={() => setMobileMenuOpen(false)}>Changelog</MobileLink>
-                                <MobileLink to="/roadmap" onClick={() => setMobileMenuOpen(false)}>Roadmap</MobileLink>
-                                <MobileLink to="/about" onClick={() => setMobileMenuOpen(false)}>About</MobileLink>
-                            </>
-                        )}
-                        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
-                        {isAuthenticated ? (
-                            <button
-                                onClick={() => { logout(); setMobileMenuOpen(false); }}
-                                style={{ fontSize: 15, fontWeight: 600, color: '#f87171', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '10px 4px' }}
-                            >
-                                Logout
-                            </button>
-                        ) : (
-                            <>
-                                <MobileLink to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</MobileLink>
-                                <Link
-                                    to="/register"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    style={{
-                                        display: 'block', marginTop: 8,
-                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                        color: '#fff', padding: '13px 20px', borderRadius: 12,
-                                        fontWeight: 700, fontSize: 15, textDecoration: 'none', textAlign: 'center',
-                                    }}
-                                >
-                                    Get Started →
-                                </Link>
-                            </>
-                        )}
+                        <div className="p-6 flex flex-col gap-2">
+                            {isAuthenticated ? (
+                                <>
+                                    <div className="p-4 mb-2 rounded-2xl bg-white/5 border border-white/5">
+                                        <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1">Signed in as</p>
+                                        <p className="text-sm font-bold text-slate-200">{user?.name}</p>
+                                        <p className="text-[10px] text-slate-500">{user?.email}</p>
+                                    </div>
+                                    <MobileLink to={dashboardLink} onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileLink>
+                                    {(isCandidate || isRecruiter) && (
+                                        <MobileLink to={`/${user.role}/messages`} onClick={() => setMobileMenuOpen(false)}>
+                                            Messages {unreadCount > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">{unreadCount}</span>}
+                                        </MobileLink>
+                                    )}
+                                    <div className="h-px bg-white/5 my-2" />
+                                    <button 
+                                        onClick={() => { logout(); setMobileMenuOpen(false); }}
+                                        className="w-full py-4 text-left font-bold text-red-500 text-sm flex items-center gap-2"
+                                    >
+                                        End Session
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <MobileLink to="/features" onClick={() => setMobileMenuOpen(false)}>Features</MobileLink>
+                                    <MobileLink to="/about" onClick={() => setMobileMenuOpen(false)}>About Us</MobileLink>
+                                    <div className="h-px bg-white/5 my-4" />
+                                    <Link 
+                                        to="/register" 
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="w-full py-4 bg-indigo-600 rounded-xl text-center text-sm font-bold text-white shadow-xl"
+                                    >
+                                        Create Account
+                                    </Link>
+                                    <Link 
+                                        to="/login" 
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="w-full py-4 text-center text-sm font-bold text-slate-400"
+                                    >
+                                        Existing User Login
+                                    </Link>
+                                </>
+                            )}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-
         </nav>
     );
 }
 
-/* ── Small helpers ── */
-function NavLink({ to, children, style = {} }) {
+/* ── Modern UI Components ── */
+function NavLink({ to, children, className = "" }) {
+    const location = useLocation();
+    const isActive = location.pathname === to;
+    
     return (
         <Link
             to={to}
-            style={{
-                fontSize: 14, fontWeight: 500, color: '#94a3b8',
-                textDecoration: 'none', padding: '8px 14px', borderRadius: 8,
-                transition: 'all 0.15s', whiteSpace: 'nowrap', ...style,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#f1f5f9'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.background = 'transparent'; }}
+            className={`
+                px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                ${className}
+                ${isActive 
+                    ? 'text-indigo-400 bg-indigo-500/10' 
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'}
+            `}
         >
             {children}
         </Link>
@@ -324,11 +264,18 @@ function NavLink({ to, children, style = {} }) {
 }
 
 function MobileLink({ to, children, onClick }) {
+    const location = useLocation();
+    const isActive = location.pathname === to;
+
     return (
-        <Link to={to} onClick={onClick} style={{
-            fontSize: 15, fontWeight: 500, color: '#94a3b8',
-            textDecoration: 'none', padding: '10px 4px', display: 'block',
-        }}>
+        <Link 
+            to={to} 
+            onClick={onClick} 
+            className={`
+                w-full py-4 px-2 rounded-xl text-sm font-bold transition-colors
+                ${isActive ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-400'}
+            `}
+        >
             {children}
         </Link>
     );
@@ -339,24 +286,7 @@ function Badge({ count }) {
         <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            style={{
-                position: 'absolute',
-                top: -2,
-                right: -2,
-                backgroundColor: '#ef4444',
-                color: 'white',
-                fontSize: 10,
-                fontWeight: 700,
-                height: 16,
-                minWidth: 16,
-                padding: '0 4px',
-                borderRadius: 99,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)',
-                border: '2px solid #07090f'
-            }}
+            className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-[#07090f] shadow-lg"
         >
             {count > 9 ? '9+' : count}
         </motion.span>

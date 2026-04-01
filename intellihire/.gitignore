@@ -1,12 +1,20 @@
 # Dependencies
 node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build / Output
 dist/
 dist-ssr/
-*.local
+build/
+.next/
+client/dist/
 
 # Environment variables
 .env
 .env.local
+.env.production
+.env.development
 .env.production.local
 .env.development.local
 
@@ -27,19 +35,13 @@ pnpm-debug.log*
 *.sw?
 
 # Project specific ignores
-client/dist/
-client/node_modules/
-server/node_modules/
-server/check_db.js
-server/verify_jobs.js
-server/seed_full_data.js
-server/check_db.js
-server/verify_jobs.js
 server/*.txt
 *.txt
 client/*.log
 client/*.txt
 server/*.log
+
+# Test / Debug files
 server/jest_out.json
 server/out.txt
 server/error.txt
@@ -51,14 +53,8 @@ server/test_verbose_output.txt
 server/test_both_output.txt
 server/analytics-results.txt
 server/analytics-proxy-test.txt
-server/test-api.js
-server/test-script.js
-server/test_db.js
-server/seed_users.js
-server/seedCandidates.js
 
-# CODE-04 FIX: Debug scripts should never be committed
+# Debug scripts (important)
 server/debug_*.js
 server/err*.txt
 server/install_*.txt
-server/out.txt

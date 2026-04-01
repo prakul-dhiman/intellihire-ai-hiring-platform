@@ -52,10 +52,10 @@ export default function ForgotPassword() {
 
                         <form onSubmit={handleSubmit}>
                             <div style={{ marginBottom: '24px' }}>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Email Address</label>
+                                <label htmlFor="forgot-email" style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#94a3b8', marginBottom: '8px' }}>Email Address</label>
                                 <div style={{ position: 'relative' }}>
                                     <HiOutlineMail size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
-                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                                    <input id="forgot-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                                         className="input-field" style={{ paddingLeft: '42px' }} placeholder="you@example.com" required />
                                 </div>
                             </div>
