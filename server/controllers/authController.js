@@ -105,7 +105,8 @@ const login = async (req, res) => {
 
     return successResponse(res, 200, "Login successful", responsePayload);
   } catch (err) {
-    return errorResponse(res, 500, err.message || "Login failed");
+    console.error('Error during login:', err.message, err.stack); // Log the full error
+    return errorResponse(res, 500, "An unexpected server error occurred during login.");
   }
 };
 
