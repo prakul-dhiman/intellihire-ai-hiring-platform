@@ -68,15 +68,15 @@ const isPrivateNetwork = (origin) => {
 const corsOptions = {
     origin: (origin, callback) => {
       console.log(`[CORS] Request from origin: ${origin}`);
-      const isAllowed =
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        (NODE_ENV === 'development' && isPrivateNetwork(origin));
+      if (NODE_ENV === 'development') {
+        return callback(null, true); // Allow all in dev
+      }
+      const isAllowed = !origin || allowedOrigins.includes(origin) || isPrivateNetwork(origin);
       
       if (!isAllowed) {
         console.warn(`[CORS] Blocked request from origin: ${origin}`);
       }
-      callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
+      callback(null, isAllowed); // Null error avoids Express 500 crashes
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
