@@ -65,16 +65,27 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Basic input validation
+    if (!email || !password) {
+      return errorResponse(res, 400, "Email and password are required.");
+    }
+
     const user = await User.findOne({ email }).select("+password");
+
     if (!user) {
-      return errorResponse(res, 401, "Invalid email or password");
+      // Log for debugging, but don't expose user existence in response
+      console.warn(`Attempted login for non-existent user: ${email}`);
+      return errorResponse(res, 401, "Invalid credentials.");
     }
 
     const isMatch = await user.matchPassword(password);
+
     if (!isMatch) {
-      return errorResponse(res, 401, "Invalid email or password");
+      console.warn(`Incorrect password for user: ${email}`);
+      return errorResponse(res, 401, "Invalid credentials.");
     }
 
+    // Generate JWT or session token
     const token = generateToken(user);
     console.log('[Auth] Generated token for login. Setting cookie...');
 
