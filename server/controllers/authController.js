@@ -1,8 +1,10 @@
 const User = require("../models/User");
+const mongoose = require("mongoose");
 const generateToken = require("../utils/generateToken");
 const { successResponse, errorResponse } = require("../utils/apiResponse");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
+
 
 // Cookie configuration
 const getCookieOptions = () => {
@@ -65,34 +67,45 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check for critical configuration
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ CRITICAL: JWT_SECRET is missing from .env!');
+      return errorResponse(res, 500, "Server configuration error.");
+    }
+
     // Basic input validation
     if (!email || !password) {
       return errorResponse(res, 400, "Email and password are required.");
     }
 
+    console.log(`[Auth] Login attempt for: ${email}`);
+
+    // Check DB state
+    if (mongoose.connection.readyState !== 1) {
+      console.error('❌ Database not connected (State: ' + mongoose.connection.readyState + ')');
+      return errorResponse(res, 500, "Database connection error.");
+    }
+
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      // Log for debugging, but don't expose user existence in response
-      console.warn(`Attempted login for non-existent user: ${email}`);
+      console.warn(`[Auth] User not found: ${email}`);
       return errorResponse(res, 401, "Invalid credentials.");
     }
 
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
-      console.warn(`Incorrect password for user: ${email}`);
+      console.warn(`[Auth] Incorrect password for user: ${email}`);
       return errorResponse(res, 401, "Invalid credentials.");
     }
 
-    // Generate JWT or session token
+    // Generate JWT
     const token = generateToken(user);
-    console.log('[Auth] Generated token for login. Setting cookie...');
+    console.log('[Auth] Token generated successfully');
 
     res.cookie("token", token, getCookieOptions());
-    console.log('[Auth] Set-Cookie header should now be present in response.');
 
-    // Also return token in body — frontend stores it for cross-device Bearer auth fallback
     const responsePayload = {
       token,
       user: {
@@ -103,23 +116,23 @@ const login = async (req, res) => {
       },
     };
 
-    // Speed Improvement: Don't await the email sending. Let it run in the background.
+    // Non-blocking email sending
     sendEmail(
       user.email,
       "IntelliHire Login Alert",
       `User ${user.name} logged in`,
       `<p><strong>Login Alert</strong></p>
-       <p>Name: ${user.name}</p>
-       <p>Email: ${user.email}</p>
        <p>Time: ${new Date().toLocaleString()}</p>`
-    ).catch(err => console.error("Login alert email failed:", err.message));
+    ).catch(err => console.error("[Auth] Login alert email failed:", err.message));
 
+    console.log('[Auth] Login successful for: ' + email);
     return successResponse(res, 200, "Login successful", responsePayload);
   } catch (err) {
-    console.error('Error during login:', err.message, err.stack); // Log the full error
-    return errorResponse(res, 500, "An unexpected server error occurred during login.");
+    console.error('❌ [Auth] Error during login:', err.name, err.message, err.stack);
+    return errorResponse(res, 500, `An unexpected server error occurred during login: ${err.message}`);
   }
 };
+
 
 /**
  * @desc Get logged-in user
