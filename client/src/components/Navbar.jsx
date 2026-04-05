@@ -9,7 +9,7 @@ import api from '../api/axios';
 import LogoSVG from './LogoSVG';
 
 export default function Navbar() {
-    const { isAuthenticated, logout, user } = useAuth();
+    const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,7 +25,7 @@ export default function Navbar() {
 
     // Unread count and Socket
     useEffect(() => {
-        if (!isAuthenticated || !user) {
+        if (!isAuthenticated || !user?.id) {
             setUnreadCount(0);
             return;
         }
@@ -56,7 +56,7 @@ export default function Navbar() {
         });
 
         socket.on('connect', () => {
-            socket.emit('join-chat', user.id);
+            if (user?.id) socket.emit('join-chat', user.id);
         });
 
         socket.on('new-message', () => {
@@ -67,7 +67,7 @@ export default function Navbar() {
         });
 
         return () => socket.disconnect();
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user?.id]);
 
     // Reset count if user visits messages
     useEffect(() => {
@@ -79,7 +79,11 @@ export default function Navbar() {
     const isAdmin = user?.role === 'admin';
     const isCandidate = user?.role === 'candidate';
     const isRecruiter = user?.role === 'recruiter';
-    const dashboardLink = isAdmin ? '/admin/dashboard' : isRecruiter ? '/recruiter/dashboard' : '/candidate/dashboard';
+    const dashboardLink = isAdmin 
+        ? '/admin/dashboard' 
+        : isRecruiter 
+            ? '/recruiter/dashboard' 
+            : '/candidate/dashboard';
 
     return (
         <nav 

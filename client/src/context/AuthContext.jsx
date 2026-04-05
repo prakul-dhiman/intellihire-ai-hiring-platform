@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -10,7 +10,6 @@ const saveSession = (userData, token) => {
     if (token) {
         localStorage.setItem('token', token);
     } else {
-        // Prevent stale token from older sessions/deploys causing 401 loops.
         localStorage.removeItem('token');
     }
 };
@@ -28,53 +27,66 @@ export function AuthProvider({ children }) {
             const saved = localStorage.getItem('user');
             return saved ? JSON.parse(saved) : null;
         } catch {
-            clearSession();
             return null;
         }
     });
 
     const [loading, setLoading] = useState(false);
     const [sessionChecked, setSessionChecked] = useState(false);
-
-    // Prevent mount-time verifySession from running immediately after
-    // a fresh login/register (no need for second round-trip).
     const justAuthed = useRef(false);
+
+    // ── Sync Auth across tabs ──────────────────────────────────────────
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'user') {
+                const newUser = e.newValue ? JSON.parse(e.newValue) : null;
+                setUser(newUser);
+            }
+            if (e.key === 'token' && !e.newValue) {
+                setUser(null);
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
     // ── Mount: verify returning user's session ────────────────────────
     useEffect(() => {
         const check = async () => {
-            console.log('[AuthContext] mount: checking session...', { justAuthed: justAuthed.current, hasStoredUser: !!localStorage.getItem('user') });
             if (justAuthed.current) {
                 setSessionChecked(true);
                 return;
             }
 
-            if (!localStorage.getItem('user')) {
+            const storedUser = localStorage.getItem('user');
+            if (!storedUser) {
+                setUser(null); // Ensure state is cleared if storage is empty
                 setSessionChecked(true);
                 return;
             }
 
             try {
+                // If we have a stored user, verify it with the server
                 const res = await api.get('/auth/me');
-                console.log('[AuthContext] mount: session valid', res.data?.data?.user?.email);
                 const freshUser = res.data?.data?.user;
                 if (freshUser) {
                     setUser(freshUser);
                     localStorage.setItem('user', JSON.stringify(freshUser));
+                } else {
+                    throw new Error('No user returned');
                 }
             } catch (err) {
-                console.warn('[AuthContext] mount: session invalid/failed', err.response?.status);
-                if (err.response?.status === 401) {
-                    setUser(null);
-                    clearSession();
-                }
+                console.warn('[AuthContext] session verify failed:', err.response?.status || err.message);
+                setUser(null);
+                clearSession();
             } finally {
                 setSessionChecked(true);
             }
         };
 
         check();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     // ── Login ─────────────────────────────────────────────────────────
     const login = async (email, password) => {
@@ -83,16 +95,17 @@ export function AuthProvider({ children }) {
             const res = await api.post('/auth/login', { email, password });
             const { user: userData, token } = res.data.data;
 
-            // CRITICAL: persist session BEFORE updating React state so the
-            // route guard reads localStorage correctly during the re-render.
             justAuthed.current = true;
-            saveSession(userData, token);   // persist token + user first
-            setUser(userData);              // then trigger re-render
+            saveSession(userData, token);
+            setUser(userData);
             setSessionChecked(true);
 
             return { success: true, user: userData };
         } catch (err) {
-            return { success: false, message: err.response?.data?.message || 'Login failed' };
+            return { 
+                success: false, 
+                message: err.response?.data?.message || 'Login failed' 
+            };
         } finally {
             setLoading(false);
         }
@@ -103,17 +116,13 @@ export function AuthProvider({ children }) {
         setLoading(true);
         try {
             const res = await api.post('/auth/register', { name, email, password, role });
-
             const { user: userData, token } = res.data?.data || {};
+            
             if (!userData) throw new Error('Invalid response from server');
 
-            // CRITICAL: Set justAuthed BEFORE setUser so the mount-effect
-            // guard fires correctly if the component re-mounts during navigation.
-            // Also persist session BEFORE updating React state so the route
-            // guard reads localStorage correctly during the re-render.
             justAuthed.current = true;
-            saveSession(userData, token);   // persist token + user first
-            setUser(userData);              // then trigger re-render
+            saveSession(userData, token);
+            setUser(userData);
             setSessionChecked(true);
 
             return { success: true, user: userData };
@@ -136,21 +145,27 @@ export function AuthProvider({ children }) {
             console.error('Logout error', err);
         }
         setUser(null);
-        setSessionChecked(true);
         clearSession();
+        setSessionChecked(true);
     };
 
-    const value = {
+    // Derived values should be memoized to prevent unnecessary re-renders,
+    // but MUST depend on the `user` state to ensure the Navbar re-renders.
+    const contextValue = useMemo(() => ({
         user,
         loading,
         sessionChecked,
         login,
         register,
         logout,
-        isAuthenticated: !!user || !!localStorage.getItem('user'),
-    };
+        isAuthenticated: !!user, // REACTIVE: depends on the state update
+    }), [user, loading, sessionChecked]);
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={contextValue}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
@@ -158,3 +173,4 @@ export function useAuth() {
     if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 }
+

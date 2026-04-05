@@ -23,11 +23,14 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
+        console.log(`[Axios] Request: ${config.method?.toUpperCase()} ${config.url} - (Auth: Bearer ${token.substring(0, 10)}...)`);
         if (config.headers && typeof config.headers.set === 'function') {
             config.headers.set('Authorization', `Bearer ${token}`);
         } else {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
+    } else {
+        console.log(`[Axios] Request: ${config.method?.toUpperCase()} ${config.url} - (Auth: None)`);
     }
     return config;
 });
