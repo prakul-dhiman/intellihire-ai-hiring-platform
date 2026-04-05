@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// In production on Vercel, use relative '/api' so Vercel's proxy rewrite
+// forwards requests to Render — this keeps everything on the same domain
+// and ensures cookies are set correctly (no cross-origin cookie rejections).
+// Only use VITE_API_BASE_URL directly if running outside of Vercel (e.g. self-hosted).
+const isVercelProd = typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app');
+const BASE_URL = isVercelProd ? '/api' : (import.meta.env.VITE_API_BASE_URL || '/api');
 
 const api = axios.create({
     baseURL: BASE_URL,

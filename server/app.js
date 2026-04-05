@@ -71,7 +71,9 @@ const corsOptions = {
       if (NODE_ENV === 'development') {
         return callback(null, true); // Allow all in dev
       }
-      const isAllowed = !origin || allowedOrigins.includes(origin) || isPrivateNetwork(origin);
+      // Also allow any *.vercel.app for preview deployments
+      const isVercelPreview = origin && origin.endsWith('.vercel.app');
+      const isAllowed = !origin || allowedOrigins.includes(origin) || isPrivateNetwork(origin) || isVercelPreview;
       
       if (!isAllowed) {
         console.warn(`[CORS] Blocked request from origin: ${origin}`);
@@ -81,6 +83,7 @@ const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Set-Cookie'],
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
