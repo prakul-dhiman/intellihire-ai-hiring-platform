@@ -11,12 +11,12 @@ const getCookieOptions = () => {
   const isProd = process.env.NODE_ENV === "production";
   const options = {
     httpOnly: true,
-    secure: isProd || true, // Force true for cross-origin Render deployments
-    sameSite: 'None', // MUST be None for cross-origin cookies to work
+    secure: isProd,           // Only HTTPS in production, HTTP allowed in dev
+    sameSite: isProd ? 'None' : 'Lax', // None required for cross-origin prod, Lax for local dev
     maxAge: 30 * 24 * 60 * 60 * 1000,
-    path: '/', // SECURE FIX: Explicitly set path to ensure cookies are sent for all API subpaths
+    path: '/',
   };
-  console.log('[Auth] Generated cookie options:', options);
+  console.log(`[Auth] Cookie options (${isProd ? 'production' : 'development'}):`, options);
   return options;
 };
 
