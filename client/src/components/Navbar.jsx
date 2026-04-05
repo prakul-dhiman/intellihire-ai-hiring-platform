@@ -106,73 +106,54 @@ export default function Navbar() {
                 </Link>
 
                 {/* ── Desktop Links ── */}
-                <div className="hidden md:flex items-center gap-1">
+                <div className="hidden md:flex flex-1 items-center justify-center gap-1">
                     {isAuthenticated ? (
-                        <div className="flex items-center gap-1 mr-4">
-                            {isCandidate && (
-                                <>
-                                    <NavLink to="/candidate/dashboard">Dashboard</NavLink>
-                                    <NavLink to="/candidate/jobs">Jobs</NavLink>
-                                    <NavLink to="/candidate/messages" className="relative">
-                                        Messages
-                                        {unreadCount > 0 && <Badge count={unreadCount} />}
-                                    </NavLink>
-                                    <NavLink to="/candidate/code">IDE</NavLink>
-                                </>
-                            )}
-                            {isRecruiter && (
-                                <>
-                                    <NavLink to="/recruiter/dashboard">Dashboard</NavLink>
-                                    <NavLink to="/recruiter/jobs/create">Post Job</NavLink>
-                                    <NavLink to="/recruiter/messages" className="relative">
-                                        Messages
-                                        {unreadCount > 0 && <Badge count={unreadCount} />}
-                                    </NavLink>
-                                </>
-                            )}
-                            {isAdmin && (
-                                <>
-                                    <NavLink to="/admin/dashboard">Admin</NavLink>
-                                    <NavLink to="/admin/analytics">Insights</NavLink>
-                                </>
-                            )}
+                        <div className="flex items-center gap-1">
+                            <NavLink to={dashboardLink}>Dashboard</NavLink>
+                            <NavLink to={`/${user?.role}/messages`} className="relative">
+                                Messages
+                                {unreadCount > 0 && <Badge count={unreadCount} />}
+                            </NavLink>
+                            
+                            {/* Live Interview Button (Prominent) */}
+                            <Link 
+                                to={isCandidate ? "/candidate/live-room" : "/recruiter/room"}
+                                className="mx-2 px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-2 text-indigo-400 font-bold text-xs hover:bg-indigo-500/20 transition-all hover:scale-105 active:scale-95"
+                            >
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                                Live Interview
+                            </Link>
+
+                            <NavLink to="/candidate/practice">Practice</NavLink>
+                            <NavLink to="/candidate/resume">Resume</NavLink>
+                            <NavLink to="/candidate/profile">Profile</NavLink>
+                            <NavLink to="/candidate/settings">Settings</NavLink>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-1 mr-4 text-sm font-semibold text-slate-400">
+                        <div className="flex items-center gap-1 text-sm font-semibold text-slate-400">
                            <NavLink to="/features">Features</NavLink>
                            <NavLink to="/about">About</NavLink>
                         </div>
                     )}
+                </div>
 
-                    {/* Auth Section */}
-                    <div className="flex items-center gap-4 pl-6 border-l border-white/10">
-                        {isAuthenticated ? (
-                            <div className="flex items-center gap-3">
-                                <Link 
-                                    to={isCandidate ? "/candidate/profile" : "/recruiter/dashboard"}
-                                    className="h-8 w-8 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs"
-                                >
-                                    {user?.name?.charAt(0).toUpperCase()}
-                                </Link>
-                                <button
-                                    onClick={logout}
-                                    className="text-xs font-bold text-slate-500 hover:text-red-400 transition-colors uppercase tracking-widest"
-                                >
-                                    Sign Out
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <Link
-                                    to="/register"
-                                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95"
-                                >
-                                    Join Platform
-                                </Link>
-                            </div>
-                        )}
-
-                    </div>
+                {/* ── Auth Section ── */}
+                <div className="hidden md:flex items-center gap-4 min-w-[120px] justify-end">
+                    {isAuthenticated ? (
+                        <button
+                            onClick={logout}
+                            className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-400 hover:text-red-400 hover:border-red-500/30 transition-all active:scale-95"
+                        >
+                            Logout
+                        </button>
+                    ) : (
+                        <Link
+                            to="/register"
+                            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95"
+                        >
+                            Join Platform
+                        </Link>
+                    )}
                 </div>
 
                 {/* ── Mobile Toggle ── */}

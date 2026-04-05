@@ -83,7 +83,6 @@ export function ScoreRing({ score = 0, size = 120, strokeWidth = 8, color, label
         <div className="flex flex-col items-center gap-2">
             <div className="relative" style={{ width: size, height: size }}>
                 <svg width={size} height={size} className="-rotate-90">
-                    <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(99,102,241,0.08)" strokeWidth={strokeWidth} />
                     <motion.circle
                         cx={size / 2} cy={size / 2} r={radius}
                         fill="none" stroke={scoreColor} strokeWidth={strokeWidth} strokeLinecap="round"
@@ -91,12 +90,12 @@ export function ScoreRing({ score = 0, size = 120, strokeWidth = 8, color, label
                         initial={{ strokeDashoffset: circumference }}
                         animate={{ strokeDashoffset: offset }}
                         transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.2 }}
-                        style={{ filter: `drop-shadow(0 0 6px ${scoreColor}40)` }}
+                        style={{ filter: `drop-shadow(0 0 8px ${scoreColor}50)` }}
                     />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <motion.span
-                        className="text-2xl font-extrabold text-white"
+                        className="text-3xl font-black text-white"
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.5, duration: 0.4 }}
@@ -104,6 +103,7 @@ export function ScoreRing({ score = 0, size = 120, strokeWidth = 8, color, label
                         {score}
                     </motion.span>
                 </div>
+
             </div>
             {label && <span className="text-[11px] font-medium" style={{ color: '#64748b' }}>{label}</span>}
         </div>

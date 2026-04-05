@@ -50,19 +50,20 @@ export default function CandidateDashboard() {
                         {/* Score Rings */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                             {[
-                                { label: 'Resume', score: u.resumeScore ?? 0, color: '#34d399' },
-                                { label: 'Coding', score: u.codingScore ?? 0, color: '#38bdf8' },
-                                { label: 'Interview', score: u.interviewScore ?? 0, color: '#fbbf24' },
-                                { label: 'Final Score', score: Math.round(finalScore), color: '#a78bfa' },
+                                { label: 'Resume', score: u.resumeScore ?? 0, color: '#475569' }, // Slate for 0
+                                { label: 'Coding', score: u.codingScore ?? 0, color: '#38bdf8' }, // Blue for 100
+                                { label: 'Interview', score: u.interviewScore ?? 0, color: '#475569' }, // Slate for 0
+                                { label: 'Final Score', score: Math.round(finalScore), color: '#818cf8' }, // Purple
                             ].map(({ label, score, color }, i) => (
-                                <motion.div key={label} style={{ ...card, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                <motion.div key={label} style={{ ...card, padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                                    <ScoreRing score={score} size={100} strokeWidth={7} color={color} />
-                                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginTop: '12px' }}>{label}</p>
-                                    <p style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>out of 100</p>
+                                    <ScoreRing score={score} size={110} strokeWidth={8} color={color} />
+                                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginTop: '16px' }}>{label}</p>
+                                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>out of 100</p>
                                 </motion.div>
                             ))}
                         </div>
+
 
                         {/* Score Breakdown */}
                         <motion.div style={{ ...card, padding: '24px', marginBottom: '24px' }}
