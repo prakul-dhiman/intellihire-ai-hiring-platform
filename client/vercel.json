@@ -7,6 +7,10 @@
     {
       "source": "/socket.io/(.*)",
       "destination": "https://intellihire-server-7u68.onrender.com/socket.io/$1"
+    },
+    {
+      "source": "/((?!api|socket\\.io).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -29,4 +33,5 @@
     }
   ]
 }
+
 
