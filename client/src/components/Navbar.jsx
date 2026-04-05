@@ -163,9 +163,6 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="flex items-center gap-4">
-                                <Link to="/login" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">
-                                    Login
-                                </Link>
                                 <Link
                                     to="/register"
                                     className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95"
@@ -174,6 +171,7 @@ export default function Navbar() {
                                 </Link>
                             </div>
                         )}
+
                     </div>
                 </div>
 
@@ -229,15 +227,9 @@ export default function Navbar() {
                                     >
                                         Create Account
                                     </Link>
-                                    <Link 
-                                        to="/login" 
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="w-full py-4 text-center text-sm font-bold text-slate-400"
-                                    >
-                                        Existing User Login
-                                    </Link>
                                 </>
                             )}
+
                         </div>
                     </motion.div>
                 )}

@@ -172,10 +172,8 @@ const LandingPage = () => {
         <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
           <a href="#features" className="nav-link">Features</a>
           <a href="#testimonials" className="nav-link">Testimonials</a>
-          {isAuthenticated ? (
+          {isAuthenticated && (
             <Link to={dashboardLink} className="nav-link" style={{ color: THEME.blue }}>Dashboard</Link>
-          ) : (
-            <Link to="/login" className="nav-link">Sign In</Link>
           )}
           <Link to={isAuthenticated ? dashboardLink : "/register"} className="btn-primary">
             {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
@@ -199,12 +197,8 @@ const LandingPage = () => {
             <Link to={isAuthenticated ? dashboardLink : "/register"} className="btn-primary" style={{ padding: '16px 32px', fontSize: 16 }}>
               {isAuthenticated ? 'Explore Dashboard' : 'Start Hiring Free'}
             </Link>
-            {!isAuthenticated && (
-              <Link to="/login" className="btn-ghost" style={{ padding: '16px 32px', fontSize: 16 }}>
-                Sign In to Account
-              </Link>
-            )}
           </div>
+
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, borderTop: `1px solid ${THEME.carbon}`, paddingTop: 32 }}>
             <div><div style={{ fontSize: 28, fontWeight: 'bold', color: THEME.text }}>-80%</div><div style={{ fontSize: 14, color: THEME.textMuted }}>Time-to-Hire</div></div>
