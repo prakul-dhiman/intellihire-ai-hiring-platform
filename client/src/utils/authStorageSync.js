@@ -20,6 +20,9 @@ export function getStoredAuthUser() {
 
 /** For useSyncExternalStore: re-render when auth in localStorage changes (any tab or same tab). */
 export function subscribeStoredAuth(listener) {
+    if (typeof window === 'undefined') {
+        return () => {};
+    }
     window.addEventListener('storage', listener);
     window.addEventListener(AUTH_STORAGE_EVENT, listener);
     return () => {

@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const { generalLimiter, codeLimiter } = require('./middlewares/rateLimiter.js');
 const errorHandler = require('./middlewares/errorHandler.js');
+const { getAllowedOrigins } = require('./config/corsOrigins.js');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes.js');
@@ -42,11 +43,7 @@ app.use(cookieParser());
 app.use(mongoSanitize());
 
 // CORS Configuration
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-].filter(Boolean);
+const allowedOrigins = getAllowedOrigins();
 
 // Check if an origin is from a private LAN (e.g. 192.168.x.x:5173 on mobile)
 const isPrivateNetwork = (origin) => {

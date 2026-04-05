@@ -11,6 +11,7 @@ const connectDB = require('./config/db.js');
 
 // Import the separated Express app
 const app = require('./app.js');
+const { getAllowedOrigins } = require('./config/corsOrigins.js');
 
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -20,18 +21,14 @@ const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
   cors: {
     origin: (origin, callback) => {
-        const allowedPaths = [
-            process.env.FRONTEND_URL, 
-            'http://localhost:5173', 
-            'http://localhost:3000'
-        ].filter(Boolean);
+        const allowedPaths = getAllowedOrigins();
 
-        const isAllowed = !origin || 
-                         allowedPaths.includes(origin) || 
-                         (NODE_ENV === 'development') ||
-                         origin.endsWith('.vercel.app');
+        const isAllowed = !origin ||
+                         allowedPaths.includes(origin) ||
+                         NODE_ENV === 'development' ||
+                         (origin && origin.endsWith('.vercel.app'));
 
-        callback(isAllowed ? null : new Error('Not allowed by CORS'), isAllowed);
+        callback(null, isAllowed);
     },
     credentials: true,
     methods: ['GET', 'POST']

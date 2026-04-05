@@ -1,15 +1,27 @@
 import axios from 'axios';
 import { notifyAuthStorageChanged } from '../utils/authStorageSync';
 
-// In production on Vercel, use relative '/api' so Vercel's proxy rewrite
-// forwards requests to Render — this keeps everything on the same domain
-// and ensures cookies are set correctly (no cross-origin cookie rejections).
-// Only use VITE_API_BASE_URL directly if running outside of Vercel (e.g. self-hosted).
-const isVercelProd = typeof window !== 'undefined' && window.location.hostname.endsWith('.vercel.app');
-const BASE_URL = isVercelProd ? '/api' : (import.meta.env.VITE_API_BASE_URL || '/api');
+/**
+ * Default `/api` — Vite dev proxy or Vercel rewrite (same origin as the app).
+ * Works for `*.vercel.app`, preview deploys, and custom domains.
+ *
+ * Set `VITE_API_BASE_URL` only to an absolute http(s) URL for cross-origin APIs.
+ * On Vercel with `vercel.json` rewrites: do not set VITE_API_BASE_URL to your Render URL
+ * or cookies and `/auth/me` will break compared to local dev.
+ */
+function getApiBaseUrl() {
+    const raw = import.meta.env.VITE_API_BASE_URL;
+    if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (/^https?:\/\//i.test(trimmed)) {
+            return trimmed.replace(/\/$/, '');
+        }
+    }
+    return '/api';
+}
 
 const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: getApiBaseUrl(),
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
