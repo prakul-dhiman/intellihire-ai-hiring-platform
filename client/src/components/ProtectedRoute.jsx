@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { normalizeClientUser } from '../utils/normalizeClientUser';
 
 // BUG-06 FIX: Each role now redirects to its correct dashboard
 const ROLE_DASHBOARDS = {
@@ -18,7 +19,7 @@ function getEffectiveUser(ctxUser) {
     if (ctxUser) return ctxUser;
     try {
         const raw = localStorage.getItem('user');
-        return raw ? JSON.parse(raw) : null;
+        return raw ? normalizeClientUser(JSON.parse(raw)) : null;
     } catch {
         return null;
     }

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
 import api from '../api/axios';
 import LogoSVG from './LogoSVG';
+import { normalizeClientUser } from '../utils/normalizeClientUser';
 
 /**
  * Helper to get the correct user session (Context -> LocalStorage).
@@ -14,7 +15,7 @@ function getEffectiveUser(ctxUser) {
     if (ctxUser) return ctxUser;
     try {
         const raw = localStorage.getItem('user');
-        return raw ? JSON.parse(raw) : null;
+        return raw ? normalizeClientUser(JSON.parse(raw)) : null;
     } catch {
         return null;
     }

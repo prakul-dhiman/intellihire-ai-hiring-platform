@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Navbar from './components/Navbar';
+import { normalizeClientUser } from './utils/normalizeClientUser';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import ChatbotWidget from './components/ChatbotWidget';
@@ -15,7 +15,7 @@ function getEffectiveUser(ctxUser) {
     if (ctxUser) return ctxUser;
     try {
         const raw = localStorage.getItem('user');
-        return raw ? JSON.parse(raw) : null;
+        return raw ? normalizeClientUser(JSON.parse(raw)) : null;
     } catch { return null; }
 }
 

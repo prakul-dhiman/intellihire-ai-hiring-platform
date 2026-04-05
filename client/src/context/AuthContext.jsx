@@ -1,7 +1,12 @@
-import { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
+import { normalizeClientUser } from '../utils/normalizeClientUser';
 
 const AuthContext = createContext(null);
+
+function isAbortError(err) {
+    return err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError';
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 const saveSession = (userData, token) => {
@@ -25,7 +30,7 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(() => {
         try {
             const saved = localStorage.getItem('user');
-            return saved ? JSON.parse(saved) : null;
+            return saved ? normalizeClientUser(JSON.parse(saved)) : null;
         } catch {
             return null;
         }
@@ -34,12 +39,19 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(false);
     const [sessionChecked, setSessionChecked] = useState(false);
     const justAuthed = useRef(false);
+    /** Bumps on login/register/logout so stale in-flight `/auth/me` cannot wipe a fresh session */
+    const authEpoch = useRef(0);
 
     // ── Sync Auth across tabs ──────────────────────────────────────────
     useEffect(() => {
         const handleStorageChange = (e) => {
             if (e.key === 'user') {
-                const newUser = e.newValue ? JSON.parse(e.newValue) : null;
+                let newUser = null;
+                try {
+                    newUser = e.newValue ? normalizeClientUser(JSON.parse(e.newValue)) : null;
+                } catch {
+                    newUser = null;
+                }
                 setUser(newUser);
             }
             if (e.key === 'token' && !e.newValue) {
@@ -53,23 +65,31 @@ export function AuthProvider({ children }) {
 
     // ── Mount: verify returning user's session ────────────────────────
     useEffect(() => {
+        let cancelled = false;
+        const controller = new AbortController();
+        const epochAtStart = authEpoch.current;
+
         const check = async () => {
             if (justAuthed.current) {
-                setSessionChecked(true);
+                if (!cancelled) setSessionChecked(true);
                 return;
             }
 
             const storedUser = localStorage.getItem('user');
             if (!storedUser) {
-                setUser(null); // Ensure state is cleared if storage is empty
-                setSessionChecked(true);
+                if (!cancelled && authEpoch.current === epochAtStart) {
+                    setUser(null);
+                }
+                if (!cancelled) setSessionChecked(true);
                 return;
             }
 
             try {
-                // If we have a stored user, verify it with the server
-                const res = await api.get('/auth/me');
-                const freshUser = res.data?.data?.user;
+                const res = await api.get('/auth/me', { signal: controller.signal });
+                if (cancelled) return;
+                if (authEpoch.current !== epochAtStart) return;
+
+                const freshUser = normalizeClientUser(res.data?.data?.user);
                 if (freshUser) {
                     setUser(freshUser);
                     localStorage.setItem('user', JSON.stringify(freshUser));
@@ -77,15 +97,22 @@ export function AuthProvider({ children }) {
                     throw new Error('No user returned');
                 }
             } catch (err) {
+                if (cancelled || isAbortError(err)) return;
+                if (authEpoch.current !== epochAtStart) return;
+
                 console.warn('[AuthContext] session verify failed:', err.response?.status || err.message);
                 setUser(null);
                 clearSession();
             } finally {
-                setSessionChecked(true);
+                if (!cancelled) setSessionChecked(true);
             }
         };
 
         check();
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
     }, []);
 
     // ── Login ─────────────────────────────────────────────────────────
@@ -94,13 +121,16 @@ export function AuthProvider({ children }) {
         try {
             const res = await api.post('/auth/login', { email, password });
             const { user: userData, token } = res.data.data;
+            const normalized = normalizeClientUser(userData);
+            if (!normalized) throw new Error('Invalid user payload');
 
             justAuthed.current = true;
-            saveSession(userData, token);
-            setUser(userData);
+            authEpoch.current += 1;
+            saveSession(normalized, token);
+            setUser(normalized);
             setSessionChecked(true);
 
-            return { success: true, user: userData };
+            return { success: true, user: normalized };
         } catch (err) {
             return { 
                 success: false, 
@@ -119,13 +149,16 @@ export function AuthProvider({ children }) {
             const { user: userData, token } = res.data?.data || {};
             
             if (!userData) throw new Error('Invalid response from server');
+            const normalized = normalizeClientUser(userData);
+            if (!normalized) throw new Error('Invalid user payload');
 
             justAuthed.current = true;
-            saveSession(userData, token);
-            setUser(userData);
+            authEpoch.current += 1;
+            saveSession(normalized, token);
+            setUser(normalized);
             setSessionChecked(true);
 
-            return { success: true, user: userData };
+            return { success: true, user: normalized };
         } catch (err) {
             return {
                 success: false,
@@ -139,6 +172,7 @@ export function AuthProvider({ children }) {
     // ── Logout ────────────────────────────────────────────────────────
     const logout = async () => {
         justAuthed.current = false;
+        authEpoch.current += 1;
         try {
             await api.post('/auth/logout');
         } catch (err) {
@@ -149,17 +183,15 @@ export function AuthProvider({ children }) {
         setSessionChecked(true);
     };
 
-    // Derived values should be memoized to prevent unnecessary re-renders,
-    // but MUST depend on the `user` state to ensure the Navbar re-renders.
-    const contextValue = useMemo(() => ({
+    const contextValue = {
         user,
         loading,
         sessionChecked,
         login,
         register,
         logout,
-        isAuthenticated: !!user, // REACTIVE: depends on the state update
-    }), [user, loading, sessionChecked]);
+        isAuthenticated: !!user,
+    };
 
     return (
         <AuthContext.Provider value={contextValue}>
