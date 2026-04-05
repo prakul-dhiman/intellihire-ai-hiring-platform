@@ -75,11 +75,11 @@ function AdminRoute({ children }) {
   );
 }
 
-import MainLayout from './components/MainLayout';
+import PublicLayout from './components/PublicLayout';
+import DashboardLayout from './components/DashboardLayout';
 
 export default function App() {
   const { isAuthenticated, user, sessionChecked } = useAuth();
-  // Effective auth accounts for the post-login state transition
   const effectiveUser = getEffectiveUser(user);
   const isAuth = isAuthenticated || !!effectiveUser;
 
@@ -95,17 +95,15 @@ export default function App() {
   }
 
   return (
-    <MainLayout>
-        <Suspense fallback={
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-          </div>
-        }>
-          <Routes>
-            {/* Public Routes */}
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+      </div>
+    }>
+      <Routes>
+        {/* Layout: Public / Marketing */}
+        <Route element={<PublicLayout />}>
             <Route path="/" element={<Landing />} />
-
-            {/* Static / Marketing Routes */}
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/feedback" element={<FeedbackPage />} />
@@ -115,46 +113,50 @@ export default function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/gdpr" element={<GDPRPage />} />
-
+            
             <Route path="/login" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Login />} />
             <Route path="/register" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+        </Route>
 
+        {/* Layout: Authenticated Dashboards */}
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             {/* Candidate Routes */}
-            <Route path="/candidate/dashboard" element={<ProtectedRoute role="candidate"><CandidateDashboard /></ProtectedRoute>} />
-            <Route path="/candidate/resume" element={<ProtectedRoute role="candidate"><ResumeForm /></ProtectedRoute>} />
-            <Route path="/candidate/code" element={<ProtectedRoute role="candidate"><CodeHub /></ProtectedRoute>} />
-            <Route path="/candidate/code/editor" element={<ProtectedRoute role="candidate"><CodeEditor /></ProtectedRoute>} />
-            <Route path="/candidate/code/editor/:id" element={<ProtectedRoute role="candidate"><CodeEditor /></ProtectedRoute>} />
-            <Route path="/candidate/interview" element={<ProtectedRoute role="candidate"><Interview /></ProtectedRoute>} />
-            <Route path="/candidate/profile" element={<ProtectedRoute role="candidate"><Profile /></ProtectedRoute>} />
-            <Route path="/candidate/live-room" element={<ProtectedRoute role="candidate"><LiveRoom /></ProtectedRoute>} />
-            <Route path="/candidate/settings" element={<ProtectedRoute role="candidate"><CandidateSettings /></ProtectedRoute>} />
-            <Route path="/candidate/jobs" element={<ProtectedRoute role="candidate"><JobDiscovery /></ProtectedRoute>} />
-            <Route path="/candidate/jobs/:id" element={<ProtectedRoute role="candidate"><JobDetails /></ProtectedRoute>} />
-            <Route path="/candidate/messages" element={<ProtectedRoute role="candidate"><Messages /></ProtectedRoute>} />
+            <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+            <Route path="/candidate/resume" element={<ResumeForm />} />
+            <Route path="/candidate/code" element={<CodeHub />} />
+            <Route path="/candidate/code/editor" element={<CodeEditor />} />
+            <Route path="/candidate/code/editor/:id" element={<CodeEditor />} />
+            <Route path="/candidate/interview" element={<Interview />} />
+            <Route path="/candidate/profile" element={<Profile />} />
+            <Route path="/candidate/live-room" element={<LiveRoom />} />
+            <Route path="/candidate/settings" element={<CandidateSettings />} />
+            <Route path="/candidate/jobs" element={<JobDiscovery />} />
+            <Route path="/candidate/jobs/:id" element={<JobDetails />} />
+            <Route path="/candidate/messages" element={<Messages />} />
 
-            {/* Recruiter Routes — accessible by recruiter or admin */}
-            <Route path="/recruiter/dashboard" element={<ProtectedRoute role="recruiter"><RecruiterDashboard /></ProtectedRoute>} />
-            <Route path="/recruiter/jobs/create" element={<ProtectedRoute role="recruiter"><CreateJob /></ProtectedRoute>} />
-            <Route path="/recruiter/jobs/:id" element={<ProtectedRoute role="recruiter"><ManageJob /></ProtectedRoute>} />
-            <Route path="/recruiter/room" element={<ProtectedRoute role="recruiter"><RecruiterRoom /></ProtectedRoute>} />
-            <Route path="/recruiter/messages" element={<ProtectedRoute role="recruiter"><Messages /></ProtectedRoute>} />
+            {/* Recruiter Routes */}
+            <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+            <Route path="/recruiter/jobs/create" element={<CreateJob />} />
+            <Route path="/recruiter/jobs/:id" element={<ManageJob />} />
+            <Route path="/recruiter/room" element={<RecruiterRoom />} />
+            <Route path="/recruiter/messages" element={<Messages />} />
+        </Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-            <Route path="/admin/candidate/:id" element={<AdminRoute><CandidateDetail /></AdminRoute>} />
-            <Route path="/admin/leaderboard" element={<AdminRoute><Leaderboard /></AdminRoute>} />
-            <Route path="/admin/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
-            <Route path="/admin/bulk-screening" element={<AdminRoute><BulkAnalyzer /></AdminRoute>} />
-            <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        {/* Layout: Admin (Internal sidebar) */}
+        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/candidate/:id" element={<AdminRoute><CandidateDetail /></AdminRoute>} />
+        <Route path="/admin/leaderboard" element={<AdminRoute><Leaderboard /></AdminRoute>} />
+        <Route path="/admin/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
+        <Route path="/admin/bulk-screening" element={<AdminRoute><BulkAnalyzer /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
 
-            {/* Catch-all: Redirect to dashboard if logged in, otherwise landing */}
-            <Route path="*" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-    </MainLayout>
+        {/* Catch-all */}
+        <Route path="*" element={isAuth ? <Navigate to={effectiveUser?.role === 'admin' ? '/admin/dashboard' : effectiveUser?.role === 'recruiter' ? '/recruiter/dashboard' : '/candidate/dashboard'} replace /> : <Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
+
 
