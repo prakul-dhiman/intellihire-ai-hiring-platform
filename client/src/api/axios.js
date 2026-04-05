@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { notifyAuthStorageChanged } from '../utils/authStorageSync';
 
 // In production on Vercel, use relative '/api' so Vercel's proxy rewrite
 // forwards requests to Render — this keeps everything on the same domain
@@ -75,6 +76,7 @@ api.interceptors.response.use(
                 console.warn('AXIOS_401: Critical session failure. Redirecting to login...', error.config?.url);
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
+                notifyAuthStorageChanged();
                 // Use replace to avoid back-button loops
                 window.location.replace('/login?expired=1');
             }

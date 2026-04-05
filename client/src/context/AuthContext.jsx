@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 import { normalizeClientUser } from '../utils/normalizeClientUser';
+import { notifyAuthStorageChanged } from '../utils/authStorageSync';
 
 const AuthContext = createContext(null);
 
@@ -17,11 +18,13 @@ const saveSession = (userData, token) => {
     } else {
         localStorage.removeItem('token');
     }
+    notifyAuthStorageChanged();
 };
 
 const clearSession = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    notifyAuthStorageChanged();
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -93,6 +96,7 @@ export function AuthProvider({ children }) {
                 if (freshUser) {
                     setUser(freshUser);
                     localStorage.setItem('user', JSON.stringify(freshUser));
+                    notifyAuthStorageChanged();
                 } else {
                     throw new Error('No user returned');
                 }

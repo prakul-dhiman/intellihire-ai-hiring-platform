@@ -1,32 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEffectiveAuthUser } from '../hooks/useEffectiveAuthUser';
 import { HiMenu, HiX } from 'react-icons/hi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
 import api from '../api/axios';
 import LogoSVG from './LogoSVG';
-import { normalizeClientUser } from '../utils/normalizeClientUser';
-
-/**
- * Helper to get the correct user session (Context -> LocalStorage).
- */
-function getEffectiveUser(ctxUser) {
-    if (ctxUser) return ctxUser;
-    try {
-        const raw = localStorage.getItem('user');
-        return raw ? normalizeClientUser(JSON.parse(raw)) : null;
-    } catch {
-        return null;
-    }
-}
 
 export default function Navbar() {
-    const { isAuthenticated, user, logout } = useAuth();
+    const { logout } = useAuth();
+    const { effectiveUser, isAuth } = useEffectiveAuthUser();
     const location = useLocation();
-    
-    const effectiveUser = getEffectiveUser(user);
-    const isAuth = isAuthenticated || !!effectiveUser;
     
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -132,8 +117,10 @@ export default function Navbar() {
                         </div>
                     ) : (
                         <div className="flex items-center gap-1 text-sm font-semibold text-slate-400">
-                           <NavLink to="/features">Features</NavLink>
-                           <NavLink to="/about">About</NavLink>
+                            <NavLink to="/features">Features</NavLink>
+                            <NavLink to="/changelog">Changelog</NavLink>
+                            <NavLink to="/roadmap">Roadmap</NavLink>
+                            <NavLink to="/about">About</NavLink>
                         </div>
                     )}
                 </div>
@@ -148,12 +135,20 @@ export default function Navbar() {
                             Logout
                         </button>
                     ) : (
-                        <Link
-                            to="/register"
-                            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95"
-                        >
-                            Join Platform
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            <Link
+                                to="/login"
+                                className="text-sm font-semibold text-slate-400 hover:text-slate-100 transition-colors"
+                            >
+                                Sign In
+                            </Link>
+                            <Link
+                                to="/register"
+                                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 inline-flex items-center gap-1"
+                            >
+                                Get Started <span aria-hidden>→</span>
+                            </Link>
+                        </div>
                     )}
                 </div>
 
@@ -200,14 +195,17 @@ export default function Navbar() {
                             ) : (
                                 <>
                                     <MobileLink to="/features" onClick={() => setMobileMenuOpen(false)}>Features</MobileLink>
-                                    <MobileLink to="/about" onClick={() => setMobileMenuOpen(false)}>About Us</MobileLink>
+                                    <MobileLink to="/changelog" onClick={() => setMobileMenuOpen(false)}>Changelog</MobileLink>
+                                    <MobileLink to="/roadmap" onClick={() => setMobileMenuOpen(false)}>Roadmap</MobileLink>
+                                    <MobileLink to="/about" onClick={() => setMobileMenuOpen(false)}>About</MobileLink>
                                     <div className="h-px bg-white/5 my-4" />
+                                    <MobileLink to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</MobileLink>
                                     <Link 
                                         to="/register" 
                                         onClick={() => setMobileMenuOpen(false)}
                                         className="w-full py-4 bg-indigo-600 rounded-xl text-center text-sm font-bold text-white shadow-xl"
                                     >
-                                        Join Platform
+                                        Get Started →
                                     </Link>
                                 </>
                             )}

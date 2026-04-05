@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useEffectiveAuthUser } from '../hooks/useEffectiveAuthUser';
 import LogoSVG from '../components/LogoSVG';
 
 const THEME = {
@@ -152,12 +152,12 @@ const AnimatedSVGHero = () => {
 // 2. Landing View (Conversion-optimized)
 // ----------------------------------------------------
 const LandingPage = () => {
-  const { isAuthenticated, user } = useAuth();
-  
-  const dashboardLink = user?.role === 'admin' 
-    ? '/admin/dashboard' 
-    : user?.role === 'recruiter' 
-      ? '/recruiter/dashboard' 
+  const { effectiveUser, isAuth } = useEffectiveAuthUser();
+
+  const dashboardLink = effectiveUser?.role === 'admin'
+    ? '/admin/dashboard'
+    : effectiveUser?.role === 'recruiter'
+      ? '/recruiter/dashboard'
       : '/candidate/dashboard';
 
   return (
@@ -165,18 +165,18 @@ const LandingPage = () => {
 
       {/* Sticky Navigation */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(10, 11, 15, 0.8)', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${THEME.carbon}`, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-        <Link to={isAuthenticated ? dashboardLink : "/"} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'inherit' }}>
+        <Link to={isAuth ? dashboardLink : "/"} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'inherit' }}>
           <LogoSVG size={34} />
           <span style={{ fontWeight: 'bold', fontSize: 18, letterSpacing: '-0.02em' }}>IntelliHire</span>
         </Link>
         <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
           <a href="#features" className="nav-link">Features</a>
           <a href="#testimonials" className="nav-link">Testimonials</a>
-          {isAuthenticated && (
+          {isAuth && (
             <Link to={dashboardLink} className="nav-link" style={{ color: THEME.blue }}>Dashboard</Link>
           )}
-          <Link to={isAuthenticated ? dashboardLink : "/register"} className="btn-primary">
-            {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
+          <Link to={isAuth ? dashboardLink : "/register"} className="btn-primary">
+            {isAuth ? 'Go to Dashboard' : 'Get Started'}
           </Link>
         </div>
       </nav>
@@ -194,8 +194,8 @@ const LandingPage = () => {
             Automate resume screening, conduct live AI coding tests, and rank candidates instantly. Stop guessing and start hiring the best talent.
           </p>
           <div style={{ display: 'flex', gap: 16, marginBottom: 48, flexWrap: 'wrap' }}>
-            <Link to={isAuthenticated ? dashboardLink : "/register"} className="btn-primary" style={{ padding: '16px 32px', fontSize: 16 }}>
-              {isAuthenticated ? 'Explore Dashboard' : 'Start Hiring Free'}
+            <Link to={isAuth ? dashboardLink : "/register"} className="btn-primary" style={{ padding: '16px 32px', fontSize: 16 }}>
+              {isAuth ? 'Explore Dashboard' : 'Start Hiring Free'}
             </Link>
           </div>
 
@@ -273,8 +273,8 @@ const LandingPage = () => {
       <section style={{ background: `linear-gradient(135deg, ${THEME.blue}, ${THEME.violet})`, padding: '80px 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 40, margin: '0 0 24px 0', color: '#fff' }}>Ready to transform your hiring?</h2>
         <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.8)', marginBottom: 40, maxWidth: 600, margin: '0 auto 40px' }}>Join 10,000+ companies hiring better talent in a fraction of the time.</p>
-        <Link to={isAuthenticated ? dashboardLink : "/register"} className="btn-primary" style={{ background: '#fff', color: THEME.obsidian }}>
-          {isAuthenticated ? 'Go to Dashboard' : 'Start Your Free Trial'}
+        <Link to={isAuth ? dashboardLink : "/register"} className="btn-primary" style={{ background: '#fff', color: THEME.obsidian }}>
+          {isAuth ? 'Go to Dashboard' : 'Start Your Free Trial'}
         </Link>
       </section>
 
