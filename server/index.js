@@ -8,6 +8,10 @@ dotenv.config();
 
 // Import database connection
 const connectDB = require('./config/db.js');
+const { validateEnvironment } = require('./config/validate.js');
+
+// Validate environment variables early
+validateEnvironment();
 
 // Import the separated Express app
 const app = require('./app.js');

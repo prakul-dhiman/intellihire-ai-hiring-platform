@@ -4,7 +4,7 @@
  * Prevents runtime errors from missing configurations
  */
 
-export const validateEnvironment = () => {
+const validateEnvironment = () => {
   const requiredEnvVars = {
     // Server Configuration
     PORT: { type: 'number', default: 5000 },
@@ -104,7 +104,7 @@ export const validateEnvironment = () => {
 /**
  * Get environment-specific configuration
  */
-export const getConfig = () => ({
+const getConfig = () => ({
   server: {
     port: process.env.PORT || 5000,
     env: process.env.NODE_ENV || 'development'
@@ -163,7 +163,7 @@ export const getConfig = () => ({
 /**
  * Validate sensitive configuration
  */
-export const validateSecurityConfig = () => {
+const validateSecurityConfig = () => {
   const nodeEnv = process.env.NODE_ENV;
 
   if (nodeEnv === 'production') {
@@ -178,4 +178,10 @@ export const validateSecurityConfig = () => {
   }
 
   console.log(`✅ Security configuration validated for ${nodeEnv} environment`);
+};
+
+module.exports = {
+  validateEnvironment,
+  getConfig,
+  validateSecurityConfig
 };

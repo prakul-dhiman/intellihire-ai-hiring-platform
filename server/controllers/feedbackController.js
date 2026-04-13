@@ -40,7 +40,7 @@ ${message}
             <p><em>This email was generated from the IntelliHire platform.</em></p>
         `;
 
-        const isSent = await sendEmail(subject, text, html);
+        const isSent = await sendEmail(process.env.EMAIL_USER || "prakul5555@gmail.com", subject, text, html);
 
         // Even if email fails (perhaps not configured yet), return a success to the user 
         // to not break the frontend form behavior. Warnings are logged on the server.
