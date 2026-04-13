@@ -8,17 +8,29 @@ export function notifyAuthStorageChanged() {
     window.dispatchEvent(new Event(AUTH_STORAGE_EVENT));
 }
 
+let lastUserRaw = undefined;
+let lastUserParsed = null;
+
+/**
+ * Parsed session user, with referential stability when `localStorage` is unchanged
+ * (important for any external-store style subscriptions).
+ */
 export function getStoredAuthUser() {
     if (typeof window === 'undefined') return null;
     try {
         const raw = localStorage.getItem('user');
-        return raw ? normalizeClientUser(JSON.parse(raw)) : null;
+        if (raw === lastUserRaw) return lastUserParsed;
+        lastUserRaw = raw;
+        lastUserParsed = raw ? normalizeClientUser(JSON.parse(raw)) : null;
+        return lastUserParsed;
     } catch {
+        lastUserRaw = null;
+        lastUserParsed = null;
         return null;
     }
 }
 
-/** For useSyncExternalStore: re-render when auth in localStorage changes (any tab or same tab). */
+/** Re-render when auth in localStorage changes (any tab or same-tab `notifyAuthStorageChanged`). */
 export function subscribeStoredAuth(listener) {
     if (typeof window === 'undefined') {
         return () => {};

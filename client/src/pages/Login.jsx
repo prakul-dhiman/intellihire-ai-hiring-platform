@@ -26,6 +26,8 @@ export default function Login() {
                     : data.user.role === 'recruiter'
                     ? '/recruiter/dashboard'
                     : '/candidate/dashboard';
+                // Defer navigation so React commits auth state before the next layout mounts (fixes stale navbar on some prod builds / routers).
+                await new Promise((r) => setTimeout(r, 0));
                 navigate(navPath, { replace: true });
             } else {
                 const msg = data.message || 'Login failed';

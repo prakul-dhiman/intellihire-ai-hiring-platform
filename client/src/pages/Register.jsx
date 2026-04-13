@@ -53,6 +53,7 @@ export default function Register() {
                     : data.user.role === 'recruiter'
                     ? '/recruiter/dashboard'
                     : '/candidate/dashboard';
+                await new Promise((r) => setTimeout(r, 0));
                 navigate(navPath, { replace: true });
             } else {
                 // Show the actual server error message

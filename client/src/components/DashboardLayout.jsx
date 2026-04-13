@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Navbar from './Navbar';
 import ChatbotWidget from './ChatbotWidget';
 
@@ -10,6 +11,9 @@ import ChatbotWidget from './ChatbotWidget';
  */
 export default function DashboardLayout() {
     const location = useLocation();
+    const { user } = useAuth();
+    const navbarKey =
+        user?.id != null ? String(user.id) : user?.email ? `u:${user.email}` : 'guest';
 
     // FULL-SCREEN routes (coding editor, live interviews) skip the navbar and padding
     const isFullscreenRoute = 
@@ -19,7 +23,7 @@ export default function DashboardLayout() {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#07090f] text-slate-100">
-            {!isFullscreenRoute && <Navbar />}
+            {!isFullscreenRoute && <Navbar key={navbarKey} />}
 
             <main 
                 className={`flex-1 transition-all duration-300 ${!isFullscreenRoute ? 'pt-16' : ''}`}
