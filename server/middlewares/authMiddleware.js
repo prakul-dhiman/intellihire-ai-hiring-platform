@@ -9,15 +9,18 @@ const { errorResponse } = require("../utils/apiResponse");
 const protect = async (req, res, next) => {
     let token;
 
-    // Prefer httpOnly cookie token first. In browser deployments, cookie is
-    // the source of truth and avoids failures from stale localStorage Bearer tokens.
-    if (req.cookies && req.cookies.token) {
-        token = req.cookies.token;
-    } else if (
+    // Prefer Bearer token from localStorage for Single Page Apps
+    // This avoids cross-origin 3P cookie drops entirely on Safari / Brave
+    if (
         req.headers.authorization &&
-        req.headers.authorization.startsWith("Bearer")
+        req.headers.authorization.startsWith("Bearer") &&
+        req.headers.authorization.split(" ")[1] !== "null" &&
+        req.headers.authorization.split(" ")[1] !== "undefined"
     ) {
         token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies && req.cookies.token && req.cookies.token !== 'none') {
+        // Fallback to cookie if no Bearer token is provided and it's not a logged-out 'none' cookie
+        token = req.cookies.token;
     }
 
     if (!token) {
