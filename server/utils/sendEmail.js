@@ -2,8 +2,8 @@ const nodemailer = require("nodemailer");
 
 const sendEmail = async (to, subject, text, html) => {
     try {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.warn("⚠️ Email not sent. EMAIL_USER or EMAIL_PASS is missing in .env");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_PASS === 'YOUR_GOOGLE_APP_PASSWORD') {
+            console.warn("⚠️ Email not sent. EMAIL_USER or EMAIL_PASS is missing/placeholder in .env");
             return false;
         }
 

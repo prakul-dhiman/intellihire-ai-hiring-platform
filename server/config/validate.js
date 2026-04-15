@@ -17,9 +17,9 @@ const validateEnvironment = () => {
     JWT_SECRET: { type: 'string', required: true },
     JWT_EXPIRE: { type: 'string', default: '7d' },
 
-    // Email
-    EMAIL_USER: { type: 'string', required: true },
-    EMAIL_PASS: { type: 'string', required: true },
+    // Email (optional — server works without email, just can't send notifications)
+    EMAIL_USER: { type: 'string', required: false },
+    EMAIL_PASS: { type: 'string', required: false },
 
     // External APIs
     JUDGE0_API_URL: { type: 'string', default: 'https://ce.judge0.com' },

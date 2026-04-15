@@ -97,11 +97,36 @@ io.on('connection', (socket) => {
 });
 
 // ─── Start Server ───────────────────────────────────────────────
+// ─── Keep-Alive Ping (prevents Render free-tier sleep) ──────────
+const KEEP_ALIVE_INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+
+function startKeepAlive() {
+  const renderUrl = process.env.RENDER_EXTERNAL_URL; // Render sets this automatically
+  if (!renderUrl) {
+    console.log('[KeepAlive] No RENDER_EXTERNAL_URL found — skipping self-ping (dev mode).');
+    return;
+  }
+  console.log(`[KeepAlive] Pinging ${renderUrl}/api/health every 14 min to prevent sleep.`);
+  setInterval(async () => {
+    try {
+      const https = require('https');
+      https.get(`${renderUrl}/api/health`, (res) => {
+        console.log(`[KeepAlive] Ping response: ${res.statusCode}`);
+      }).on('error', (err) => {
+        console.warn(`[KeepAlive] Ping failed: ${err.message}`);
+      });
+    } catch (err) {
+      console.warn(`[KeepAlive] Ping error: ${err.message}`);
+    }
+  }, KEEP_ALIVE_INTERVAL_MS);
+}
+
 const start = async () => {
   try {
     await connectDB();
     httpServer.listen(PORT, () => {
       console.log(`🚀 IntelliHire Server Running (Env: ${NODE_ENV}) on port ${PORT}`);
+      startKeepAlive();
     });
   } catch (err) {
     console.error('❌ Server startup error:', err);
